@@ -1,19 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, ExternalLink } from 'lucide-react';
-
-export interface VideoResource {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail?: string;
-  url: string;
-  duration?: string;
-  date?: string;
-  category: string;
-  subcategory?: string;
-}
+import { VideoResource } from '@/services/api';
 
 interface VideoCardProps {
   video: VideoResource;

@@ -1,4 +1,3 @@
-
 import { Category } from '@/components/ui/CategoryCard';
 
 // Extend the Category interface to include missing properties
@@ -31,8 +30,12 @@ export interface VideoResource {
   title: string;
   url: string;
   description: string;
-  tags?: string[];
+  thumbnail?: string;
+  duration?: string;
+  date?: string;
+  category: string;
   subcategory?: string;
+  tags?: string[];
 }
 
 const API_BASE_URL = 'https://api.example.com'; // Replace with your actual API base URL
@@ -155,7 +158,11 @@ export const fetchVideos = async (categorySlug: string, subcategorySlug?: string
     if (category.videos) {
       const mainVideos = category.videos.map(video => ({
         ...video,
-        subcategory: undefined
+        category: category.name,
+        subcategory: undefined,
+        thumbnail: undefined, // Add default value for thumbnail
+        duration: undefined,  // Add default value for duration
+        date: undefined       // Add default value for date
       }));
       videos.push(...mainVideos);
     }
@@ -166,7 +173,11 @@ export const fetchVideos = async (categorySlug: string, subcategorySlug?: string
         if (sub.videos) {
           const subVideos = sub.videos.map(video => ({
             ...video,
-            subcategory: sub.name
+            category: category.name,
+            subcategory: sub.name,
+            thumbnail: undefined, // Add default value for thumbnail
+            duration: undefined,  // Add default value for duration
+            date: undefined       // Add default value for date
           }));
           videos.push(...subVideos);
         }
@@ -178,7 +189,11 @@ export const fetchVideos = async (categorySlug: string, subcategorySlug?: string
       if (subcategory?.videos) {
         const subVideos = subcategory.videos.map(video => ({
           ...video,
-          subcategory: subcategory.name
+          category: category.name,
+          subcategory: subcategory.name,
+          thumbnail: undefined, // Add default value for thumbnail
+          duration: undefined,  // Add default value for duration
+          date: undefined       // Add default value for date
         }));
         videos.push(...subVideos);
       }
