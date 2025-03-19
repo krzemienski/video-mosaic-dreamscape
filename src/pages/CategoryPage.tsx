@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
-import VideoCard, { VideoResource } from '@/components/ui/VideoCard';
+import VideoCard from '@/components/ui/VideoCard';
 import ViewToggle from '@/components/ui/ViewToggle';
 import ErrorState from '@/components/ui/ErrorState';
-import { fetchCategoryBySlug, fetchVideos } from '@/services/api';
-import { Category } from '@/components/ui/CategoryCard';
+import { fetchCategory, fetchVideos, VideoResource } from '@/services/api';
+import { ExtendedCategory } from '@/services/api';
 import useViewState from '@/hooks/useViewState';
 import { ChevronDown } from 'lucide-react';
 
@@ -17,7 +17,7 @@ interface SubcategoryOption {
 
 const CategoryPage = () => {
   const { categorySlug, subcategorySlug } = useParams<{ categorySlug: string; subcategorySlug?: string }>();
-  const [category, setCategory] = useState<Category | null>(null);
+  const [category, setCategory] = useState<ExtendedCategory | null>(null);
   const [videos, setVideos] = useState<VideoResource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ const CategoryPage = () => {
       setError(null);
       
       // Fetch category details
-      const categoryData = await fetchCategoryBySlug(categorySlug);
+      const categoryData = await fetchCategory(categorySlug);
       if (!categoryData) {
         setError("Category not found");
         return;
@@ -52,7 +52,10 @@ const CategoryPage = () => {
       
       const subcategoryOptions: SubcategoryOption[] = [
         { label: 'All Videos', value: null },
-        ...uniqueSubcategories.map(sub => ({ label: sub as string, value: sub }))
+        ...uniqueSubcategories.map(sub => ({ 
+          label: sub as string, 
+          value: sub as string 
+        }))
       ];
       
       setSubcategories(subcategoryOptions);
