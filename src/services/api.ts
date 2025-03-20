@@ -38,111 +38,200 @@ export interface VideoResource {
   tags?: string[];
 }
 
-const API_BASE_URL = 'https://api.example.com'; // Replace with your actual API base URL
+// Define interfaces for the awesome-video data
+interface AwesomeVideoItem {
+  name: string;
+  description: string;
+  url: string;
+  category?: string;
+  subcategory?: string;
+}
 
-export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
-  // In a real application, this would call an API endpoint
-  // For now, we'll simulate by returning some dummy data
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const dummyCategories: ExtendedCategory[] = [
-        {
-          id: '1',
-          name: 'Web Development',
-          slug: 'web-development',
-          description: 'Learn about web development technologies.',
-          imageUrl: '/images/category-web-dev.jpg',
-          videos: [
-            {
-              id: '101',
-              title: 'React Tutorial',
-              url: 'https://example.com/react-tutorial',
-              description: 'A comprehensive React tutorial for beginners.',
-              tags: ['react', 'javascript', 'frontend'],
-            },
-            {
-              id: '102',
-              title: 'Node.js Crash Course',
-              url: 'https://example.com/node-crash-course',
-              description: 'Get started with Node.js in this crash course.',
-              tags: ['node.js', 'javascript', 'backend'],
-            },
-          ],
-          subcategories: [
-            {
-              id: '11',
-              name: 'Frontend Frameworks',
-              slug: 'frontend-frameworks',
-              description: 'Explore different frontend frameworks.',
-              videos: [
-                {
-                  id: '111',
-                  title: 'Angular Basics',
-                  url: 'https://example.com/angular-basics',
-                  description: 'Learn the basics of Angular framework.',
-                  tags: ['angular', 'typescript', 'frontend'],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: '2',
-          name: 'Mobile Development',
-          slug: 'mobile-development',
-          description: 'Discover mobile app development techniques.',
-          imageUrl: '/images/category-mobile-dev.jpg',
-          videos: [
-            {
-              id: '201',
-              title: 'React Native Guide',
-              url: 'https://example.com/react-native-guide',
-              description: 'Build native apps with React Native.',
-              tags: ['react native', 'javascript', 'mobile'],
-            },
-          ],
-        },
-        {
-          id: '3',
-          name: 'Data Science',
-          slug: 'data-science',
-          description: 'Explore data analysis and machine learning.',
-          imageUrl: '/images/category-data-science.jpg',
-          videos: [],
-        },
-        {
-          id: '4',
-          name: 'Game Development',
-          slug: 'game-development',
-          description: 'Create your own games with these tutorials.',
-          imageUrl: '/images/category-game-dev.jpg',
-          videos: [],
-        },
-        {
-          id: '5',
-          name: 'Cloud Computing',
-          slug: 'cloud-computing',
-          description: 'Learn about cloud platforms and services.',
-          imageUrl: '/images/category-cloud.jpg',
-          videos: [],
-        },
-        {
-          id: '6',
-          name: 'Cybersecurity',
-          slug: 'cybersecurity',
-          description: 'Protect systems and networks from cyber threats.',
-          imageUrl: '/images/category-cybersecurity.jpg',
-          videos: [],
-        },
-      ];
-      resolve(dummyCategories);
-    }, 500);
+interface AwesomeVideoCategory {
+  name: string;
+  description?: string;
+  subcategories?: AwesomeVideoCategory[];
+  items?: AwesomeVideoItem[];
+}
+
+interface AwesomeVideoContents {
+  categories: AwesomeVideoCategory[];
+}
+
+let awesomeVideoCache: ExtendedCategory[] | null = null;
+const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+let lastFetchTime = 0;
+
+const SCHEMA_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/.github/schema.json';
+const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/contents.json';
+
+// Function to convert awesome-video data to our ExtendedCategory format
+const transformAwesomeVideoData = (contents: AwesomeVideoContents): ExtendedCategory[] => {
+  return contents.categories.map((category, catIndex) => {
+    const videos = category.items?.map((item, itemIndex) => ({
+      id: `${catIndex}-item-${itemIndex}`,
+      title: item.name,
+      url: item.url,
+      description: item.description || '',
+      tags: item.category ? [item.category] : [],
+    })) || [];
+
+    const subcategories = category.subcategories?.map((subcat, subIndex) => {
+      const subVideos = subcat.items?.map((item, itemIndex) => ({
+        id: `${catIndex}-${subIndex}-item-${itemIndex}`,
+        title: item.name,
+        url: item.url,
+        description: item.description || '',
+        tags: item.category ? [item.category] : [],
+      })) || [];
+
+      return {
+        id: `${catIndex}-sub-${subIndex}`,
+        name: subcat.name,
+        slug: subcat.name.toLowerCase().replace(/\s+/g, '-'),
+        description: subcat.description,
+        videos: subVideos,
+      };
+    }) || [];
+
+    return {
+      id: `cat-${catIndex}`,
+      name: category.name,
+      slug: category.name.toLowerCase().replace(/\s+/g, '-'),
+      description: category.description || `Resources related to ${category.name}`,
+      imageUrl: `/images/category-${catIndex}.jpg`, // Default placeholder
+      videos,
+      subcategories,
+    };
   });
 };
 
+export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
+  const currentTime = Date.now();
+  
+  // Return cached data if it's fresh
+  if (awesomeVideoCache && (currentTime - lastFetchTime < CACHE_DURATION)) {
+    return awesomeVideoCache;
+  }
+  
+  try {
+    // Fetch content data (we don't need the schema for now)
+    const response = await fetch(CONTENTS_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+    
+    const contents: AwesomeVideoContents = await response.json();
+    const transformedData = transformAwesomeVideoData(contents);
+    
+    // Update cache
+    awesomeVideoCache = transformedData;
+    lastFetchTime = currentTime;
+    
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching awesome-video data:', error);
+    
+    // Fall back to demo data if fetch fails
+    return fallbackCategories();
+  }
+};
+
+// Fallback function to return demo data when API fails
+const fallbackCategories = (): ExtendedCategory[] => {
+  return [
+    {
+      id: '1',
+      name: 'Web Development',
+      slug: 'web-development',
+      description: 'Learn about web development technologies.',
+      imageUrl: '/images/category-web-dev.jpg',
+      videos: [
+        {
+          id: '101',
+          title: 'React Tutorial',
+          url: 'https://example.com/react-tutorial',
+          description: 'A comprehensive React tutorial for beginners.',
+          tags: ['react', 'javascript', 'frontend'],
+        },
+        {
+          id: '102',
+          title: 'Node.js Crash Course',
+          url: 'https://example.com/node-crash-course',
+          description: 'Get started with Node.js in this crash course.',
+          tags: ['node.js', 'javascript', 'backend'],
+        },
+      ],
+      subcategories: [
+        {
+          id: '11',
+          name: 'Frontend Frameworks',
+          slug: 'frontend-frameworks',
+          description: 'Explore different frontend frameworks.',
+          videos: [
+            {
+              id: '111',
+              title: 'Angular Basics',
+              url: 'https://example.com/angular-basics',
+              description: 'Learn the basics of Angular framework.',
+              tags: ['angular', 'typescript', 'frontend'],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: '2',
+      name: 'Mobile Development',
+      slug: 'mobile-development',
+      description: 'Discover mobile app development techniques.',
+      imageUrl: '/images/category-mobile-dev.jpg',
+      videos: [
+        {
+          id: '201',
+          title: 'React Native Guide',
+          url: 'https://example.com/react-native-guide',
+          description: 'Build native apps with React Native.',
+          tags: ['react native', 'javascript', 'mobile'],
+        },
+      ],
+    },
+    {
+      id: '3',
+      name: 'Data Science',
+      slug: 'data-science',
+      description: 'Explore data analysis and machine learning.',
+      imageUrl: '/images/category-data-science.jpg',
+      videos: [],
+    },
+    {
+      id: '4',
+      name: 'Game Development',
+      slug: 'game-development',
+      description: 'Create your own games with these tutorials.',
+      imageUrl: '/images/category-game-dev.jpg',
+      videos: [],
+    },
+    {
+      id: '5',
+      name: 'Cloud Computing',
+      slug: 'cloud-computing',
+      description: 'Learn about cloud platforms and services.',
+      imageUrl: '/images/category-cloud.jpg',
+      videos: [],
+    },
+    {
+      id: '6',
+      name: 'Cybersecurity',
+      slug: 'cybersecurity',
+      description: 'Protect systems and networks from cyber threats.',
+      imageUrl: '/images/category-cybersecurity.jpg',
+      videos: [],
+    },
+  ];
+};
+
 export const fetchCategory = async (categorySlug: string): Promise<ExtendedCategory | undefined> => {
-  // In a real application, this would call an API endpoint
-  // For now, we'll simulate by filtering from the dummy data
   const categories = await fetchCategories();
   return categories.find(category => category.slug === categorySlug);
 };
@@ -206,9 +295,7 @@ export const fetchVideos = async (categorySlug: string, subcategorySlug?: string
   }
 };
 
-export const searchVideos = async (query: string) => {
-  // In a real application, this would call an API endpoint
-  // For now, we'll simulate by fetching all data and filtering locally
+export const searchVideos = async (query: string): Promise<VideoResource[]> => {
   try {
     const categories = await fetchCategories();
     

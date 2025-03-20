@@ -16,7 +16,19 @@ const Index = () => {
       setIsLoading(true);
       setError(null);
       const data = await fetchCategories();
-      setCategories(data);
+      
+      // Add count property to each category
+      const categoriesWithCount = data.map(category => {
+        const videosCount = (category.videos?.length || 0) + 
+          (category.subcategories?.reduce((sum, sub) => sum + (sub.videos?.length || 0), 0) || 0);
+        
+        return {
+          ...category,
+          count: videosCount
+        };
+      });
+      
+      setCategories(categoriesWithCount);
     } catch (err) {
       setError("Failed to load categories. Please try again.");
     } finally {
@@ -49,11 +61,11 @@ const Index = () => {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center animate-fade-in-down">
           <span className="inline-block text-xs font-medium text-primary bg-primary/10 rounded-full px-3 py-1 mb-3">
-            CURATED COLLECTION
+            AWESOME VIDEO RESOURCES
           </span>
           <h1 className="text-4xl font-bold mb-4">Video Resource Library</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Explore our curated collection of high-quality videos across various categories.
+            A curated collection of high-quality video resources across various categories.
             Find the perfect resources to enhance your knowledge and skills.
           </p>
         </div>
