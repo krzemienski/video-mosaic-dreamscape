@@ -43,6 +43,13 @@
     --sidebar-accent-foreground: 0 0% 96%;
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 282 100% 50%;
+    
+    /* New theme properties */
+    --font-heading: 'Inter';
+    --font-body: 'Inter';
+    --font-mono: 'SF Mono';
+    --gradient: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+    --icon-style: 'rounded';
   }
 }
 
@@ -52,7 +59,16 @@
   }
 
   body {
-    @apply bg-background text-foreground transition-colors duration-300 font-inter antialiased;
+    @apply bg-background text-foreground transition-colors duration-300 antialiased;
+    font-family: var(--font-body, 'Inter'), sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading, 'Inter'), sans-serif;
+  }
+  
+  code, pre {
+    font-family: var(--font-mono, 'SF Mono'), monospace;
   }
 
   html {
@@ -91,6 +107,10 @@
 
   .no-highlight {
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  .gradient-bg {
+    background: var(--gradient);
   }
 }
 
