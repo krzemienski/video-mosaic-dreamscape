@@ -5,6 +5,7 @@ import CategoryCard from '@/components/ui/CategoryCard';
 import ErrorState from '@/components/ui/ErrorState';
 import { fetchCategories } from '@/services/api';
 import { Category } from '@/components/ui/CategoryCard';
+import { toast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -13,14 +14,29 @@ const Index = () => {
 
   const loadCategories = async () => {
     try {
+      console.log("Index: Starting to load categories");
       setIsLoading(true);
       setError(null);
       const data = await fetchCategories();
+      console.log(`Index: Received ${data.length} categories from API`);
+      
+      if (data.length === 0) {
+        console.error("Index: No categories returned from API");
+        setError("No categories found. Please try again later.");
+        toast({
+          title: "No data found",
+          description: "We couldn't find any categories to display.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Add count property to each category
       const categoriesWithCount = data.map(category => {
         const videosCount = (category.videos?.length || 0) + 
           (category.subcategories?.reduce((sum, sub) => sum + (sub.videos?.length || 0), 0) || 0);
+        
+        console.log(`Index: Category "${category.name}" has ${videosCount} total videos`);
         
         return {
           ...category,
@@ -29,14 +45,28 @@ const Index = () => {
       });
       
       setCategories(categoriesWithCount);
+      console.log("Index: Categories set successfully");
+      
+      // Show success toast
+      toast({
+        title: "Data loaded successfully",
+        description: `Loaded ${categoriesWithCount.length} categories.`,
+      });
     } catch (err) {
+      console.error("Index: Error loading categories", err);
       setError("Failed to load categories. Please try again.");
+      toast({
+        title: "Error loading data",
+        description: "There was a problem loading the categories.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("Index: Component mounted, loading categories");
     loadCategories();
   }, []);
 
@@ -75,9 +105,15 @@ const Index = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isLoading ? renderSkeletons() : (
-              categories.map(category => (
-                <CategoryCard key={category.id} category={category} />
-              ))
+              categories.length > 0 ? (
+                categories.map(category => (
+                  <CategoryCard key={category.id} category={category} />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-12">
+                  <p className="text-muted-foreground">No categories found. Please try again later.</p>
+                </div>
+              )
             )}
           </div>
         )}

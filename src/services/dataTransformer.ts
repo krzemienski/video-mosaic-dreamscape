@@ -16,7 +16,7 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
   
   // Extract categories from the contents
   const categories = contents.categories.map((category: any, catIndex: number) => {
-    console.log(`Processing category ${catIndex}:`, category.title || category.name || 'Unnamed category');
+    console.log(`Processing category ${catIndex}: ${category.title || category.name || 'Unnamed category'}`);
     
     // For proper naming and availability
     const categoryName = category.title || category.name || `Category ${catIndex}`;
@@ -34,7 +34,7 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
     
     // Map items to our VideoItem format
     const videos = categoryItems.map((item: any, itemIndex: number) => {
-      console.log(`Processing item ${itemIndex} in category "${categoryName}":`, item.name || item.title);
+      console.log(`Processing item ${itemIndex} in category "${categoryName}": ${item.name || item.title}`);
       return {
         id: `${catIndex}-item-${itemIndex}`,
         title: item.name || item.title || `Resource ${itemIndex}`,
@@ -95,7 +95,7 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
       name: categoryName,
       slug,
       description: categoryDescription,
-      imageUrl: `/images/category-${catIndex}.jpg`, // Default placeholder
+      imageUrl: `/images/category-${catIndex % 6 + 1}.jpg`, // Cycle through 6 placeholder images
       videos,
       subcategories,
     };
