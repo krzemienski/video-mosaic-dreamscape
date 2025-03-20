@@ -17,6 +17,7 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
   // Extract categories from the contents
   const categories = contents.categories.map((category: any, catIndex: number) => {
     console.log(`Processing category ${catIndex}: ${category.title || category.name || 'Unnamed category'}`);
+    console.log('Category data:', JSON.stringify(category).substring(0, 200) + '...');
     
     // For proper naming and availability
     const categoryName = category.title || category.name || `Category ${catIndex}`;
@@ -25,9 +26,17 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
     // Find items belonging to this category
     const categoryItems = Array.isArray(contents.items) ? 
       contents.items.filter((item: any) => {
-        return item.category === category.id || 
-               item.category === categoryName || 
+        const belongsToCategory = item.category === category.id || 
+               item.category === categoryName ||
+               item.categories?.includes(category.name) ||
+               item.categories?.includes(category.id) || 
                !item.category; // Items without a category are assigned to the first category
+        
+        if (belongsToCategory) {
+          console.log(`Found item for category "${categoryName}":`, item.name || item.title);
+        }
+        
+        return belongsToCategory;
       }) : [];
     
     console.log(`Category "${categoryName}" has ${categoryItems.length} direct items`);
@@ -62,8 +71,16 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
         // Find items for this subcategory
         const subcatItems = Array.isArray(contents.items) ? 
           contents.items.filter((item: any) => {
-            return item.category === subcat.id || 
-                  item.category === subcatName;
+            const belongsToSubcat = item.category === subcat.id || 
+                  item.category === subcatName ||
+                  item.categories?.includes(subcatName) ||
+                  item.categories?.includes(subcat.id);
+            
+            if (belongsToSubcat) {
+              console.log(`Found item for subcategory "${subcatName}":`, item.name || item.title);
+            }
+            
+            return belongsToSubcat;
           }) : [];
         
         console.log(`Subcategory "${subcatName}" has ${subcatItems.length} items`);
@@ -88,7 +105,7 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
     }
     
     const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
-    console.log(`Completed processing category "${categoryName}" with slug "${slug}"`);
+    console.log(`Completed processing category "${categoryName}" with slug "${slug}" and ${videos.length} videos`);
     
     return {
       id: category.id || `cat-${catIndex}`,

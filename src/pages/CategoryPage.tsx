@@ -5,10 +5,11 @@ import MainLayout from '@/components/layouts/MainLayout';
 import VideoCard from '@/components/ui/VideoCard';
 import ViewToggle from '@/components/ui/ViewToggle';
 import ErrorState from '@/components/ui/ErrorState';
-import { fetchCategory, fetchVideos, VideoResource } from '@/services/api';
-import { ExtendedCategory } from '@/services/api';
+import { fetchCategory, fetchVideos } from '@/services/api';
+import { ExtendedCategory, VideoResource } from '@/types/video';
 import useViewState from '@/hooks/useViewState';
 import { ChevronDown } from 'lucide-react';
+import { toast } from "@/components/ui/use-toast";
 
 interface SubcategoryOption {
   label: string;
@@ -33,44 +34,76 @@ const CategoryPage = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log(`CategoryPage: Loading data for category slug "${categorySlug}"`);
+      
       // Fetch category details
       const categoryData = await fetchCategory(categorySlug);
       if (!categoryData) {
+        console.error("CategoryPage: Category not found");
         setError("Category not found");
+        toast({
+          title: "Category not found",
+          description: "We couldn't find the category you're looking for.",
+          variant: "destructive",
+        });
         return;
       }
+      
+      console.log(`CategoryPage: Found category "${categoryData.name}" with ${categoryData.videos?.length || 0} videos`);
       setCategory(categoryData);
       
       // Fetch videos
+      console.log(`CategoryPage: Fetching videos for category "${categorySlug}" and subcategory "${selectedSubcategory || 'none'}"`);
       const videosData = await fetchVideos(categorySlug, selectedSubcategory || undefined);
+      console.log(`CategoryPage: Fetched ${videosData.length} videos`);
       setVideos(videosData);
       
-      // Extract subcategories from videos
-      const uniqueSubcategories = Array.from(
-        new Set(videosData.map(v => v.subcategory).filter(Boolean))
-      );
-      
+      // Build subcategory options from the category data
       const subcategoryOptions: SubcategoryOption[] = [
-        { label: 'All Videos', value: null },
-        ...uniqueSubcategories.map(sub => ({ 
-          label: sub as string, 
-          value: sub as string 
-        }))
+        { label: 'All Videos', value: null }
       ];
       
+      if (categoryData.subcategories && categoryData.subcategories.length > 0) {
+        console.log(`CategoryPage: Category has ${categoryData.subcategories.length} subcategories`);
+        categoryData.subcategories.forEach(sub => {
+          if (sub.videos && sub.videos.length > 0) {
+            subcategoryOptions.push({
+              label: `${sub.name} (${sub.videos.length})`,
+              value: sub.slug
+            });
+          }
+        });
+      } else {
+        console.log('CategoryPage: Category has no subcategories');
+      }
+      
       setSubcategories(subcategoryOptions);
+      
+      // Show success toast
+      toast({
+        title: "Data loaded successfully",
+        description: `Loaded ${videosData.length} videos in ${categoryData.name}.`,
+      });
     } catch (err) {
+      console.error("CategoryPage: Error loading data", err);
       setError("Failed to load category data. Please try again.");
+      toast({
+        title: "Error loading data",
+        description: "There was a problem loading the category data.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("CategoryPage: Component mounted or updated, loading data");
     loadData();
   }, [categorySlug, selectedSubcategory]);
 
   const handleSubcategoryChange = (value: string | null) => {
+    console.log(`CategoryPage: Subcategory changed to "${value || 'All'}"`);
     setSelectedSubcategory(value);
     setDropdownOpen(false);
   };
@@ -179,6 +212,12 @@ const CategoryPage = () => {
         ) : (
           <div className="text-center py-12 bg-muted/10 rounded-lg border border-border/40 animate-fade-in">
             <p className="text-muted-foreground">No videos found in this category.</p>
+            <button 
+              onClick={loadData} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         )}
       </div>
