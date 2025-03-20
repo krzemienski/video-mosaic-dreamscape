@@ -1,14 +1,14 @@
-
 // Re-export from videoApi.ts
-export { 
+export {
   fetchCategories,
   fetchCategory,
   fetchVideos,
-  searchVideos
+  searchVideos,
+  refreshRemoteData
 } from './videoApi';
 
 // Re-export types from types/video.ts
-export type { 
+export type {
   ExtendedCategory,
   VideoResource,
   VideoItem,

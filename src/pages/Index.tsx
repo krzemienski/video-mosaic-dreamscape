@@ -1,15 +1,17 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layouts/MainLayout';
 import CategoryCard from '@/components/ui/CategoryCard';
 import ErrorState from '@/components/ui/ErrorState';
-import { fetchCategories } from '@/services/api';
+import { fetchCategories, refreshRemoteData } from '@/services/api';
 import { Category } from '@/components/ui/CategoryCard';
 import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 const Index = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadCategories = async () => {
@@ -19,7 +21,7 @@ const Index = () => {
       setError(null);
       const data = await fetchCategories();
       console.log(`Index: Received ${data.length} categories from API`);
-      
+
       if (data.length === 0) {
         console.error("Index: No categories returned from API");
         setError("No categories found. Please try again later.");
@@ -30,23 +32,23 @@ const Index = () => {
         });
         return;
       }
-      
+
       // Add count property to each category
       const categoriesWithCount = data.map(category => {
-        const videosCount = (category.videos?.length || 0) + 
+        const videosCount = (category.videos?.length || 0) +
           (category.subcategories?.reduce((sum, sub) => sum + (sub.videos?.length || 0), 0) || 0);
-        
+
         console.log(`Index: Category "${category.name}" has ${videosCount} total videos`);
-        
+
         return {
           ...category,
           count: videosCount
         };
       });
-      
+
       setCategories(categoriesWithCount);
       console.log("Index: Categories set successfully");
-      
+
       // Show success toast
       toast({
         title: "Data loaded successfully",
@@ -62,6 +64,48 @@ const Index = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      console.log("Index: Refreshing data from remote source");
+      setIsRefreshing(true);
+
+      toast({
+        title: "Refreshing data",
+        description: "Fetching latest data from remote source...",
+      });
+
+      const data = await refreshRemoteData();
+      console.log(`Index: Received ${data.length} categories from refresh`);
+
+      // Add count property to each category
+      const categoriesWithCount = data.map(category => {
+        const videosCount = (category.videos?.length || 0) +
+          (category.subcategories?.reduce((sum, sub) => sum + (sub.videos?.length || 0), 0) || 0);
+
+        return {
+          ...category,
+          count: videosCount
+        };
+      });
+
+      setCategories(categoriesWithCount);
+
+      toast({
+        title: "Data refreshed",
+        description: `Successfully refreshed ${categoriesWithCount.length} categories.`,
+      });
+    } catch (err) {
+      console.error("Index: Error refreshing data", err);
+      toast({
+        title: "Refresh failed",
+        description: "There was a problem refreshing the data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -98,6 +142,18 @@ const Index = () => {
             A curated collection of high-quality video resources across various categories.
             Find the perfect resources to enhance your knowledge and skills.
           </p>
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+            >
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+              {isRefreshing ? "Refreshing..." : "Refresh Data"}
+            </Button>
+          </div>
         </div>
 
         {error ? (
