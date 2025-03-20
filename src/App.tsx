@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPage from "./pages/CategoryPage";
 import SearchPage from "./pages/SearchPage";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import ThemeSelector from "./components/ThemeSelector/ThemeSelector";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,19 +29,22 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner position="top-right" />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/category/:categorySlug" element={<CategoryPage />} />
-            <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner position="top-right" />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/category/:categorySlug" element={<CategoryPage />} />
+              <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <ThemeSelector />
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
