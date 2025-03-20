@@ -19,7 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ["SF Pro Display", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+				inter: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+				sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
 				mono: ["SF Mono", "monospace"],
 			},
 			colors: {
@@ -31,20 +32,12 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					50: "#F5F4F6",
-					100: "#E5E2E9",
-					200: "#CBBFD9",
-					300: "#B09DC8",
-					400: "#9679B9",
-					500: "#7C5CA3",
-					600: "#634884",
-					700: "#4A3564",
-					800: "#312442",
-					900: "#191221"
+					hyperterm: "#9B00FF"
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					foreground: 'hsl(var(--secondary-foreground))',
+					hyperterm: "#00AEEF"
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -56,7 +49,8 @@ export default {
 				},
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					foreground: 'hsl(var(--accent-foreground))',
+					hyperterm: "#FF007F"
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -76,17 +70,12 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				purple: {
-					50: "#F5F4F6",
-					100: "#E5E2E9",
-					200: "#CBBFD9",
-					300: "#B09DC8",
-					400: "#9679B9",
-					500: "#7C5CA3",
-					600: "#634884",
-					700: "#4A3564",
-					800: "#312442",
-					900: "#191221"
+				hyperterm: {
+					black: "#0A0A0A",
+					white: "#F5F5F5",
+					purple: "#9B00FF",
+					blue: "#00AEEF",
+					pink: "#FF007F"
 				}
 			},
 			borderRadius: {
