@@ -217,13 +217,28 @@ export const searchVideos = async (query: string) => {
     
     categories.forEach(category => {
       if (category.videos) {
-        allVideos.push(...category.videos);
+        const videosWithCategory = category.videos.map(video => ({
+          ...video,
+          category: category.name,
+          thumbnail: undefined,
+          duration: undefined,
+          date: undefined
+        }));
+        allVideos.push(...videosWithCategory);
       }
       
       if (category.subcategories) {
         category.subcategories.forEach(subcategory => {
           if (subcategory.videos) {
-            allVideos.push(...subcategory.videos);
+            const videosWithCategoryAndSubcategory = subcategory.videos.map(video => ({
+              ...video,
+              category: category.name,
+              subcategory: subcategory.name,
+              thumbnail: undefined,
+              duration: undefined,
+              date: undefined
+            }));
+            allVideos.push(...videosWithCategoryAndSubcategory);
           }
         });
       }
