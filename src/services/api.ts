@@ -62,7 +62,7 @@ let awesomeVideoCache: ExtendedCategory[] | null = null;
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 let lastFetchTime = 0;
 
-const SCHEMA_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/.github/schema.json';
+// Use the direct URL to the contents.json
 const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/contents.json';
 
 // Function to convert awesome-video data to our ExtendedCategory format
@@ -115,7 +115,7 @@ export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   }
   
   try {
-    // Fetch content data (we don't need the schema for now)
+    // Fetch content data from the provided URL
     const response = await fetch(CONTENTS_URL);
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.status}`);
