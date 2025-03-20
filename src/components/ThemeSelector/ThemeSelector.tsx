@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Shuffle, Palette, FileDown, FileUp, Sparkles, Font, GalleryHorizontalEnd, X, Square, RotateCcw } from "lucide-react";
+import { Shuffle, Palette, FileDown, FileUp, Sparkles, Type, GalleryHorizontalEnd, X, Square, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme, themes, fontOptions, ThemeIcons } from "@/contexts/ThemeContext";
 import { Slider } from "@/components/ui/slider";
@@ -136,7 +135,7 @@ const ThemeSelector = () => {
                   <span className="sr-only sm:not-sr-only sm:inline-block">Colors</span>
                 </TabsTrigger>
                 <TabsTrigger value="typography">
-                  <Font className="h-4 w-4 mr-2" />
+                  <Type className="h-4 w-4 mr-2" />
                   <span className="sr-only sm:not-sr-only sm:inline-block">Typography</span>
                 </TabsTrigger>
                 <TabsTrigger value="effects">
@@ -336,7 +335,6 @@ const ThemeSelector = () => {
         </PopoverContent>
       </Popover>
       
-      {/* Export Dialog */}
       <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -363,7 +361,6 @@ const ThemeSelector = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Import Dialog */}
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

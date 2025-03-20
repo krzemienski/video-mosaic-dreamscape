@@ -26,11 +26,12 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({ theme }) => {
     "--preview-gradient": gradient ? 
       `linear-gradient(${gradient.direction}, ${gradient.from}, ${gradient.to})` : 
       `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`,
+    backgroundColor: colors.background,
+    color: colors.text
   } as React.CSSProperties;
   
   return (
-    <div style={previewStyle} className="w-full space-y-4 p-4 rounded-lg" 
-         style={{ backgroundColor: colors.background, color: colors.text }}>
+    <div style={previewStyle} className="w-full space-y-4 p-4 rounded-lg">
       <div className="flex justify-between items-center">
         <h3 style={{ fontFamily: "var(--preview-font-heading)" }} className="text-sm font-bold">
           Preview
