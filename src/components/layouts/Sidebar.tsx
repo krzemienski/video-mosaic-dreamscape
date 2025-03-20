@@ -63,8 +63,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     const loadCategories = async () => {
       try {
         setIsLoading(true);
+        console.log('Sidebar: Fetching categories...');
         const data = await fetchCategories();
-        console.log('Sidebar: Loaded categories:', data.map(c => c.name).join(', '));
+        console.log('Sidebar: Loaded categories count:', data.length);
+        
+        if (data.length > 0) {
+          console.log('Sidebar: First few categories:', data.slice(0, 3).map(c => c.name).join(', '));
+        }
+        
         setCategories(data);
       } catch (error) {
         console.error('Error loading categories for sidebar:', error);
