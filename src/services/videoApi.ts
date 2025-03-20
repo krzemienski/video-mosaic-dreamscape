@@ -1,11 +1,15 @@
-
 import { ExtendedCategory, VideoResource } from '@/types/video';
-import { transformAwesomeVideoData } from './dataTransformer';
+import { transformAwesomeVideoData, examineUrlContent } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
 import { fallbackCategories } from './fallbackData';
 
 // Use the direct URL to the contents.json
-const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/contents.json';
+const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/master/contents.json';
+// Fallback URLs in case the primary one fails
+const FALLBACK_URLS = [
+  'https://raw.githubusercontent.com/krzemienski/awesome-video/main/contents.json',
+  'https://raw.githubusercontent.com/krzemienski/awesome-video/HEAD/contents.json'
+];
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   console.log('fetchCategories: Checking cache first');
@@ -20,62 +24,50 @@ export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   
   try {
     console.log(`fetchCategories: Fetching data from ${CONTENTS_URL}`);
-    // Fetch content data from the provided URL
-    const response = await fetch(CONTENTS_URL, {
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      }
-    });
     
-    if (!response.ok) {
-      console.error(`fetchCategories: HTTP error ${response.status}`);
-      throw new Error(`Failed to fetch data: ${response.status}`);
-    }
-    
-    const rawData = await response.text();
-    console.log(`fetchCategories: Received ${rawData.length} bytes of data`);
-    
-    // Log a small preview of the raw data
-    console.log('fetchCategories: Raw data preview:', rawData.substring(0, 500) + '...');
-    
+    // First try the primary URL
     try {
-      const contents = JSON.parse(rawData);
-      console.log('fetchCategories: Successfully parsed JSON data');
-      console.log('fetchCategories: Contents structure:', Object.keys(contents).join(', '));
-      
-      // Check if the structure matches what we expect
-      if (!contents.categories || !Array.isArray(contents.categories)) {
-        console.error('fetchCategories: Invalid data structure - missing categories array');
-        console.log('fetchCategories: Contents:', JSON.stringify(contents).substring(0, 500) + '...');
-        throw new Error('Invalid data structure');
-      }
-      
-      console.log(`fetchCategories: Found ${contents.categories.length} categories in the data`);
-      
-      // If there are items, log how many we found
-      if (contents.items && Array.isArray(contents.items)) {
-        console.log(`fetchCategories: Found ${contents.items.length} items in the data`);
-      } else {
-        console.warn('fetchCategories: No items array found in the data');
-      }
+      const contents = await examineUrlContent(CONTENTS_URL);
+      console.log('fetchCategories: Successfully retrieved and parsed data from primary URL');
       
       const transformedData = transformAwesomeVideoData(contents);
       
-      if (transformedData.length === 0) {
-        console.warn('fetchCategories: Transformation returned empty data. Falling back to demo data.');
-        return fallbackCategories();
+      if (transformedData.length > 0) {
+        console.log(`fetchCategories: Transformation successful, got ${transformedData.length} categories`);
+        updateCache(transformedData);
+        return transformedData;
       }
       
-      // Update cache
-      console.log(`fetchCategories: Updating cache with ${transformedData.length} categories`);
-      updateCache(transformedData);
-      
-      return transformedData;
-    } catch (parseError) {
-      console.error('fetchCategories: JSON parsing error:', parseError);
-      throw parseError;
+      console.warn('fetchCategories: Primary URL returned empty data after transformation');
+    } catch (primaryError) {
+      console.error('fetchCategories: Error with primary URL:', primaryError);
     }
+    
+    // Try fallback URLs if primary fails
+    for (const fallbackUrl of FALLBACK_URLS) {
+      try {
+        console.log(`fetchCategories: Trying fallback URL: ${fallbackUrl}`);
+        const contents = await examineUrlContent(fallbackUrl);
+        console.log(`fetchCategories: Successfully retrieved and parsed data from fallback URL: ${fallbackUrl}`);
+        
+        const transformedData = transformAwesomeVideoData(contents);
+        
+        if (transformedData.length > 0) {
+          console.log(`fetchCategories: Fallback transformation successful, got ${transformedData.length} categories`);
+          updateCache(transformedData);
+          return transformedData;
+        }
+        
+        console.warn(`fetchCategories: Fallback URL ${fallbackUrl} returned empty data after transformation`);
+      } catch (fallbackError) {
+        console.error(`fetchCategories: Error with fallback URL ${fallbackUrl}:`, fallbackError);
+      }
+    }
+    
+    // If all URLs fail, use the fallback data
+    console.warn('fetchCategories: All URLs failed. Falling back to demo data');
+    return fallbackCategories();
+    
   } catch (error) {
     console.error('Error fetching awesome-video data:', error);
     

@@ -1,42 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Film, Folder, Home, Info } from 'lucide-react';
+import { fetchCategories } from '@/services/videoApi';
+import { ExtendedCategory } from '@/types/video';
 
 interface CategoryItem {
   name: string;
   slug: string;
   subcategories?: CategoryItem[];
 }
-
-// Sample categories - in a real app, these would come from the API
-const categories: CategoryItem[] = [
-  {
-    name: 'Programming',
-    slug: 'programming',
-    subcategories: [
-      { name: 'JavaScript', slug: 'javascript' },
-      { name: 'Python', slug: 'python' },
-      { name: 'React', slug: 'react' },
-    ]
-  },
-  {
-    name: 'Design',
-    slug: 'design',
-    subcategories: [
-      { name: 'UI/UX', slug: 'ui-ux' },
-      { name: 'Graphic Design', slug: 'graphic-design' },
-    ]
-  },
-  {
-    name: 'Marketing',
-    slug: 'marketing',
-    subcategories: [
-      { name: 'Social Media', slug: 'social-media' },
-      { name: 'SEO', slug: 'seo' },
-    ]
-  }
-];
 
 interface AccordionItemProps {
   category: CategoryItem;
@@ -60,7 +33,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ category }) => {
         </button>
       </div>
       
-      {isOpen && category.subcategories && (
+      {isOpen && category.subcategories && category.subcategories.length > 0 && (
         <div className="pl-6 bg-sidebar-accent/30 animate-accordion-down">
           {category.subcategories.map((subcategory) => (
             <Link 
@@ -83,6 +56,26 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const [categories, setCategories] = useState<ExtendedCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchCategories();
+        console.log('Sidebar: Loaded categories:', data.map(c => c.name).join(', '));
+        setCategories(data);
+      } catch (error) {
+        console.error('Error loading categories for sidebar:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadCategories();
+  }, []);
+
   return (
     <aside 
       className={`fixed top-0 left-0 z-40 h-screen bg-sidebar transition-all duration-300 ease-in-out overflow-hidden border-r border-sidebar-border
@@ -106,11 +99,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             
             <div className="mt-2 mb-2">
               <div className="px-4 py-2 text-xs text-muted-foreground">
-                CATEGORIES
+                CATEGORIES {isLoading ? '(Loading...)' : `(${categories.length})`}
               </div>
-              {categories.map((category) => (
-                <AccordionItem key={category.slug} category={category} />
-              ))}
+              
+              {isLoading ? (
+                <div className="px-4 py-3 text-sm text-muted-foreground">Loading categories...</div>
+              ) : (
+                categories.map((category) => (
+                  <AccordionItem key={category.slug} category={category} />
+                ))
+              )}
             </div>
             
             <Link 
