@@ -1,5 +1,5 @@
 
-import { ExtendedCategory, VideoResource, AwesomeVideoContents } from '@/types/video';
+import { ExtendedCategory, VideoResource } from '@/types/video';
 import { transformAwesomeVideoData } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
 import { fallbackCategories } from './fallbackData';
@@ -8,31 +8,53 @@ import { fallbackCategories } from './fallbackData';
 const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/refs/heads/master/contents.json';
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
+  console.log('fetchCategories: Checking cache first');
   const { data: cachedData, isFresh } = getCachedData();
   
   // Return cached data if it's fresh
   if (cachedData && isFresh) {
+    console.log('fetchCategories: Returning fresh cached data');
     return cachedData;
   }
   
   try {
+    console.log(`fetchCategories: Fetching data from ${CONTENTS_URL}`);
     // Fetch content data from the provided URL
     const response = await fetch(CONTENTS_URL);
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.status}`);
     }
     
-    const contents: AwesomeVideoContents = await response.json();
-    const transformedData = transformAwesomeVideoData(contents);
+    const rawData = await response.text();
+    console.log(`fetchCategories: Received ${rawData.length} bytes of data`);
     
-    // Update cache
-    updateCache(transformedData);
-    
-    return transformedData;
+    try {
+      const contents = JSON.parse(rawData);
+      console.log('fetchCategories: Successfully parsed JSON data');
+      console.log('fetchCategories: Contents structure:', 
+        Object.keys(contents).join(', '));
+      
+      const transformedData = transformAwesomeVideoData(contents);
+      
+      if (transformedData.length === 0) {
+        console.warn('fetchCategories: Transformation returned empty data. Falling back to demo data.');
+        return fallbackCategories();
+      }
+      
+      // Update cache
+      console.log(`fetchCategories: Updating cache with ${transformedData.length} categories`);
+      updateCache(transformedData);
+      
+      return transformedData;
+    } catch (parseError) {
+      console.error('fetchCategories: JSON parsing error:', parseError);
+      throw parseError;
+    }
   } catch (error) {
     console.error('Error fetching awesome-video data:', error);
     
     // Fall back to demo data if fetch fails
+    console.log('fetchCategories: Falling back to demo data');
     return fallbackCategories();
   }
 };

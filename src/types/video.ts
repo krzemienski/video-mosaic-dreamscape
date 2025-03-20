@@ -37,22 +37,29 @@ export interface VideoResource {
   tags?: string[];
 }
 
-// Define interfaces for the awesome-video data
+// Define interfaces that better match the GitHub awesome-video data structure
 export interface AwesomeVideoItem {
-  name: string;
-  description: string;
+  name?: string;
+  title?: string;
+  description?: string;
   url: string;
   category?: string;
   subcategory?: string;
+  tags?: string[];
 }
 
 export interface AwesomeVideoCategory {
-  name: string;
+  id?: string;
+  title?: string;
+  name?: string;
   description?: string;
+  parent?: string;
   subcategories?: AwesomeVideoCategory[];
   items?: AwesomeVideoItem[];
 }
 
 export interface AwesomeVideoContents {
+  title?: string;
   categories: AwesomeVideoCategory[];
+  items?: AwesomeVideoItem[];
 }
