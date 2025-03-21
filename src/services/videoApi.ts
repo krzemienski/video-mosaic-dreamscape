@@ -1,3 +1,4 @@
+
 import { ExtendedCategory, VideoResource } from '@/types/video';
 import { transformAwesomeVideoData, examineUrlContent } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
@@ -40,6 +41,16 @@ export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
 
       console.warn('fetchCategories: Primary URL returned empty data after transformation');
     } catch (primaryError) {
+      // If error contains CORS message, just use fallback data immediately
+      if (primaryError instanceof Error && 
+          (primaryError.message.includes('CORS') || 
+           primaryError.message.includes('Failed to fetch'))) {
+        console.error('fetchCategories: CORS issue detected with primary URL, using fallback data');
+        const fallbackData = fallbackCategories();
+        updateCache(fallbackData);
+        return fallbackData;
+      }
+      
       console.error('fetchCategories: Error with primary URL:', primaryError);
     }
 
@@ -263,6 +274,16 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
 
       console.warn('refreshRemoteData: Primary URL returned empty data after transformation');
     } catch (primaryError) {
+      // If error contains CORS message, just use fallback data immediately
+      if (primaryError instanceof Error && 
+          (primaryError.message.includes('CORS') || 
+           primaryError.message.includes('Failed to fetch'))) {
+        console.error('refreshRemoteData: CORS issue detected with primary URL, using fallback data');
+        const fallbackData = fallbackCategories();
+        updateCache(fallbackData);
+        return fallbackData;
+      }
+      
       console.error('refreshRemoteData: Error with primary URL:', primaryError);
     }
 

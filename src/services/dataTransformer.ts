@@ -1,3 +1,4 @@
+
 import { AwesomeVideoContents, ExtendedCategory, VideoItem } from '@/types/video';
 
 // Function to convert awesome-video data to our ExtendedCategory format
@@ -119,28 +120,50 @@ const mapProjectToVideoItem = (
 export const examineUrlContent = async (url: string): Promise<any> => {
   try {
     console.log(`Examining content from URL: ${url}`);
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    const text = await response.text();
-    console.log(`Received ${text.length} bytes of data`);
-    console.log('Raw content preview:', text.substring(0, 500) + '...');
-
+    
+    // First try with standard CORS-enabled fetch
     try {
-      const json = JSON.parse(text);
-      console.log('Content structure keys:', Object.keys(json).join(', '));
-      return json;
-    } catch (e) {
-      console.error('Not valid JSON:', e);
-      return { text: text.substring(0, 1000) + '...' };
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+
+      const text = await response.text();
+      console.log(`Received ${text.length} bytes of data`);
+      
+      try {
+        const json = JSON.parse(text);
+        console.log('Content structure keys:', Object.keys(json).join(', '));
+        return json;
+      } catch (e) {
+        console.error('Not valid JSON:', e);
+        throw e;
+      }
+    } catch (error) {
+      console.log('Standard fetch failed, trying with no-cors mode:', error);
+      
+      // If standard fetch fails, try with no-cors mode
+      // Note: This will result in an opaque response that cannot be read directly
+      // but we can use it to signal that the resource exists
+      const noCorsResponse = await fetch(url, {
+        mode: 'no-cors',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      console.log('No-cors fetch completed with status:', noCorsResponse.type);
+      
+      // For opaque responses from no-cors mode, we need to fall back to a proxy or local data
+      // Since we can't read the response, return a signal that we should use fallback
+      throw new Error('CORS issue detected, using fallback data');
     }
   } catch (error) {
     console.error('Error examining URL:', error);

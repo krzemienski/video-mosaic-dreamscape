@@ -60,10 +60,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [categories, setCategories] = useState<ExtendedCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadCategories = async () => {
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       console.log('Sidebar: Fetching categories...');
       const data = await fetchCategories();
       console.log('Sidebar: Loaded categories count:', data.length);
@@ -73,9 +75,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       }
       
       setCategories(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading categories for sidebar:', error);
-      toast.error('Failed to load categories');
+      
+      // Check for CORS related errors
+      if (error.message && (
+          error.message.includes('CORS') || 
+          error.message.includes('Failed to fetch') || 
+          error.message.includes('Network Error')
+      )) {
+        setErrorMessage('CORS issue detected. The application is using fallback data.');
+        toast.error('CORS issue detected. Using fallback data.');
+      } else {
+        setErrorMessage('Failed to load categories');
+        toast.error('Failed to load categories');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -86,15 +100,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     
     try {
       setIsRefreshing(true);
+      setErrorMessage(null);
       toast.loading('Refreshing data...');
       
       const freshData = await refreshRemoteData();
       setCategories(freshData);
       
       toast.success('Data refreshed successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
+      
+      // Check for CORS related errors
+      if (error.message && (
+          error.message.includes('CORS') || 
+          error.message.includes('Failed to fetch') || 
+          error.message.includes('Network Error')
+      )) {
+        setErrorMessage('CORS issue detected. The application is using fallback data.');
+        toast.error('CORS issue detected. Using fallback data.');
+      } else {
+        setErrorMessage('Failed to refresh data');
+        toast.error('Failed to refresh data');
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -123,6 +150,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             </button>
           </div>
           <p className="text-sm text-muted-foreground mt-1">Curated learning materials</p>
+          
+          {errorMessage && (
+            <div className="mt-2 text-xs text-amber-500 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-md">
+              {errorMessage}
+            </div>
+          )}
         </div>
         
         <nav className="flex-1 overflow-y-auto custom-scrollbar">
