@@ -5,14 +5,17 @@ import { fetchCategories } from '@/services/videoApi';
 import { ExtendedCategory } from '@/types/video';
 import { toast } from 'sonner';
 import Logo, { LogoIcon } from '@/components/brand/Logo';
+
 interface CategoryItem {
   name: string;
   slug: string;
   subcategories?: CategoryItem[];
 }
+
 interface AccordionItemProps {
   category: CategoryItem;
 }
+
 interface GithubRepoInfo {
   stargazers_count: number;
   html_url: string;
@@ -21,10 +24,12 @@ interface GithubRepoInfo {
   };
   name: string;
 }
+
 const AccordionItem: React.FC<AccordionItemProps> = ({
   category
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
   return <div className="border-b border-sidebar-border">
       <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-sidebar-accent transition-colors duration-200" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex items-center gap-2">
@@ -44,9 +49,11 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
         </div>}
     </div>;
 };
+
 interface SidebarProps {
   isOpen: boolean;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({
   isOpen
 }) => {
@@ -59,6 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     stars: 1600,
     url: "https://github.com/krzemienski/awesome-video"
   });
+
   const loadCategories = async () => {
     try {
       setIsLoading(true);
@@ -83,6 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       setIsLoading(false);
     }
   };
+
   const fetchGithubRepoInfo = async () => {
     try {
       const response = await fetch('https://api.github.com/repos/krzemienski/awesome-video');
@@ -99,10 +108,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       console.error('Error fetching GitHub repo information:', error);
     }
   };
+
   useEffect(() => {
     loadCategories();
     fetchGithubRepoInfo();
   }, []);
+
   return <aside className={`fixed top-0 left-0 z-40 h-screen bg-sidebar transition-all duration-300 ease-in-out overflow-hidden border-r border-sidebar-border
       ${isOpen ? 'w-64' : 'w-0 md:w-0'}`}>
       <div className="flex flex-col h-full">
@@ -142,36 +153,25 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div> : categories.map(category => <AccordionItem key={category.slug} category={category} />)}
             </div>
             
-            <Link to="/about" className="flex items-center gap-2 px-4 py-3 hover:bg-sidebar-accent transition-colors duration-200 mt-2" onClick={() => window.gtag?.('event', 'navigation', {
-            action: 'about_click'
-          })}>
-              <Info size={18} className="text-brand-cyan" />
-              <span className="font-mono tracking-wide">About</span>
-            </Link>
+            <a 
+              href={repoInfo.url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-2 px-4 py-3 hover:bg-sidebar-accent transition-colors duration-200 mt-2"
+              onClick={() => window.gtag?.('event', 'external_link', {
+                destination: 'github_repo'
+              })}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-cyan">
+                <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+                <path d="M9 18c-4.51 2-5-2-7-2"></path>
+              </svg>
+              <span className="font-mono tracking-wide">{repoInfo.owner}/{repoInfo.name}</span>
+            </a>
           </div>
         </nav>
-        
-        {/* GitHub Repository CTA */}
-        <div className="p-4 border-t border-sidebar-border">
-          <a href={repoInfo.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-md bg-brand-magenta/10 hover:bg-brand-magenta/20 transition-colors text-sm" onClick={() => window.gtag?.('event', 'external_link', {
-          destination: 'github_repo'
-        })}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-cyan"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
-            <div>
-              <div className="font-mono tracking-wide text-brand-magenta">{repoInfo.owner}/{repoInfo.name}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
-                <span>⭐ {repoInfo.stars}</span>
-                <span className="mx-1">•</span>
-                <span>Contribute</span>
-              </div>
-            </div>
-          </a>
-        </div>
-        
-        <div className="p-4 border-t border-sidebar-border text-center py-px">
-          <LogoIcon size={24} className="inline-block mb-2" />
-        </div>
       </div>
     </aside>;
 };
+
 export default Sidebar;
