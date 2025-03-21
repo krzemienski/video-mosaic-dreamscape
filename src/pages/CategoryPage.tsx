@@ -2,14 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
-import VideoCard from '@/components/ui/VideoCard';
-import ViewToggle from '@/components/ui/ViewToggle';
 import ErrorState from '@/components/ui/ErrorState';
 import { fetchCategory, fetchVideos } from '@/services/api';
 import { ExtendedCategory, VideoResource } from '@/types/video';
 import useViewState from '@/hooks/useViewState';
-import { ChevronDown } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
+
+// Import our new components
+import CategoryHeader from '@/components/category/CategoryHeader';
+import CategoryControls from '@/components/category/CategoryControls';
+import ProjectsDisplay from '@/components/category/ProjectsDisplay';
 
 interface SubcategoryOption {
   label: string;
@@ -25,7 +27,6 @@ const CategoryPage = () => {
   const [view, setView] = useViewState('grid');
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(subcategorySlug || null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const loadData = async () => {
     if (!categorySlug) return;
@@ -52,13 +53,13 @@ const CategoryPage = () => {
       console.log(`CategoryPage: Found category "${categoryData.name}" with ${categoryData.videos?.length || 0} projects`);
       setCategory(categoryData);
       
-      // Fetch videos
+      // Fetch projects
       console.log(`CategoryPage: Fetching projects for category "${categorySlug}" and subcategory "${selectedSubcategory || 'none'}"`);
       const projectsData = await fetchVideos(categorySlug, selectedSubcategory || undefined);
       console.log(`CategoryPage: Fetched ${projectsData.length} projects`);
       setProjects(projectsData);
       
-      // Build subcategory options from the category data
+      // Build subcategory options
       const subcategoryOptions: SubcategoryOption[] = [
         { label: 'All Projects', value: null }
       ];
@@ -105,24 +106,6 @@ const CategoryPage = () => {
   const handleSubcategoryChange = (value: string | null) => {
     console.log(`CategoryPage: Subcategory changed to "${value || 'All'}"`);
     setSelectedSubcategory(value);
-    setDropdownOpen(false);
-  };
-
-  const renderSkeletons = () => {
-    return Array(6).fill(0).map((_, i) => (
-      <div key={i} className="glass-card rounded-lg overflow-hidden animate-pulse">
-        <div className="aspect-video w-full bg-muted/30"></div>
-        <div className="p-4">
-          <div className="h-6 bg-muted/40 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-muted/30 rounded w-full mb-1"></div>
-          <div className="h-4 bg-muted/30 rounded w-2/3"></div>
-          <div className="flex justify-between mt-4">
-            <div className="h-5 bg-muted/40 rounded w-16"></div>
-            <div className="h-5 bg-muted/40 rounded w-24"></div>
-          </div>
-        </div>
-      </div>
-    ));
   };
 
   if (error) {
@@ -136,90 +119,22 @@ const CategoryPage = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 animate-fade-in-down">
-          {!isLoading && category && (
-            <>
-              <span className="inline-block text-xs font-medium text-primary bg-primary/10 rounded-full px-3 py-1 mb-3">
-                CATEGORY
-              </span>
-              <h1 className="text-3xl md:text-4xl font-bold mb-3">{category.name}</h1>
-              {category.description && (
-                <p className="text-muted-foreground max-w-3xl">{category.description}</p>
-              )}
-            </>
-          )}
-          
-          {isLoading && (
-            <div className="animate-pulse">
-              <div className="h-8 bg-muted/40 rounded w-1/4 mb-3"></div>
-              <div className="h-4 bg-muted/30 rounded w-1/2"></div>
-            </div>
-          )}
-        </div>
+        <CategoryHeader category={category} isLoading={isLoading} />
+        
+        <CategoryControls 
+          subcategories={subcategories}
+          selectedSubcategory={selectedSubcategory}
+          onSubcategoryChange={handleSubcategoryChange}
+          view={view}
+          onViewChange={setView}
+        />
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div className="relative">
-            <button
-              className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg text-sm"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              {subcategories.find(sub => sub.value === selectedSubcategory)?.label || 'All Projects'}
-              <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {dropdownOpen && (
-              <div className="absolute top-full left-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-lg z-10 animate-fade-in-down">
-                {subcategories.map((sub) => (
-                  <button
-                    key={sub.value || 'all'}
-                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                      selectedSubcategory === sub.value ? 'bg-accent/50 font-medium' : ''
-                    }`}
-                    onClick={() => handleSubcategoryChange(sub.value)}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <ViewToggle view={view} onChange={setView} />
-        </div>
-
-        {isLoading ? (
-          <div className={`grid gap-6 ${
-            view === 'list' 
-              ? 'grid-cols-1' 
-              : view === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-          }`}>
-            {renderSkeletons()}
-          </div>
-        ) : projects.length > 0 ? (
-          <div className={`grid gap-6 ${
-            view === 'list' 
-              ? 'grid-cols-1' 
-              : view === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-          }`}>
-            {projects.map((project) => (
-              <VideoCard key={project.id} video={project} view={view} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-muted/10 rounded-lg border border-border/40 animate-fade-in">
-            <p className="text-muted-foreground">No projects found in this category.</p>
-            <button 
-              onClick={loadData} 
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+        <ProjectsDisplay 
+          projects={projects}
+          isLoading={isLoading}
+          view={view}
+          onRetry={loadData}
+        />
       </div>
     </MainLayout>
   );
