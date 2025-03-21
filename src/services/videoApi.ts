@@ -3,8 +3,8 @@ import { transformAwesomeVideoData, examineUrlContent } from './dataTransformer'
 import { getCachedData, updateCache } from './cacheService';
 import { fallbackCategories } from './fallbackData';
 
-// Primary URL to fetch the contents.json
-const CONTENTS_URL = 'https://raw.githubusercontent.com/krzemienski/awesome-video/master/contents.json';
+// Primary URL to fetch the contents.json from CloudFront
+const CONTENTS_URL = 'https://d2l6iuu30u6bxw.cloudfront.net/contents.json';
 // Fallback URLs in case the primary one fails
 const FALLBACK_URLS = [
   'https://raw.githubusercontent.com/krzemienski/awesome-video/main/contents.json',
@@ -247,7 +247,7 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
   console.log('refreshRemoteData: Forcing refresh from remote source');
 
   try {
-    // Try primary URL first
+    // Try primary CloudFront URL first
     console.log(`refreshRemoteData: Fetching from primary URL: ${CONTENTS_URL}`);
     try {
       const contents = await examineUrlContent(CONTENTS_URL);

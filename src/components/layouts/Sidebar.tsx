@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Film, Folder, Home, Info } from 'lucide-react';
-import { fetchCategories } from '@/services/videoApi';
+import { ChevronDown, ChevronRight, Film, Folder, Home, Info, RefreshCw } from 'lucide-react';
+import { fetchCategories, refreshRemoteData } from '@/services/videoApi';
 import { ExtendedCategory } from '@/types/video';
+import { toast } from 'sonner';
 
 interface CategoryItem {
   name: string;
@@ -58,27 +59,48 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [categories, setCategories] = useState<ExtendedCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setIsLoading(true);
-        console.log('Sidebar: Fetching categories...');
-        const data = await fetchCategories();
-        console.log('Sidebar: Loaded categories count:', data.length);
-        
-        if (data.length > 0) {
-          console.log('Sidebar: First few categories:', data.slice(0, 3).map(c => c.name).join(', '));
-        }
-        
-        setCategories(data);
-      } catch (error) {
-        console.error('Error loading categories for sidebar:', error);
-      } finally {
-        setIsLoading(false);
+  const loadCategories = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Sidebar: Fetching categories...');
+      const data = await fetchCategories();
+      console.log('Sidebar: Loaded categories count:', data.length);
+      
+      if (data.length > 0) {
+        console.log('Sidebar: First few categories:', data.slice(0, 3).map(c => c.name).join(', '));
       }
-    };
+      
+      setCategories(data);
+    } catch (error) {
+      console.error('Error loading categories for sidebar:', error);
+      toast.error('Failed to load categories');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
     
+    try {
+      setIsRefreshing(true);
+      toast.loading('Refreshing data...');
+      
+      const freshData = await refreshRemoteData();
+      setCategories(freshData);
+      
+      toast.success('Data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('Failed to refresh data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+  
+  useEffect(() => {
     loadCategories();
   }, []);
 
@@ -89,7 +111,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     >
       <div className="flex flex-col h-full">
         <div className="p-4 border-b border-sidebar-border">
-          <h2 className="text-xl font-semibold">Video Resources</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Video Resources</h2>
+            <button 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-1 hover:bg-sidebar-accent rounded-full text-muted-foreground transition-colors"
+              title="Refresh data"
+            >
+              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+          </div>
           <p className="text-sm text-muted-foreground mt-1">Curated learning materials</p>
         </div>
         
