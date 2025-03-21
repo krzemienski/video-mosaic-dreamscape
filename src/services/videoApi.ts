@@ -5,6 +5,8 @@ import { getCachedData, updateCache } from './cacheService';
 
 // Primary URL to fetch the contents.json from CloudFront
 const CONTENTS_URL = 'https://d2l6iuu30u6bxw.cloudfront.net/contents.json';
+// Fallback URL in case the primary fails
+const FALLBACK_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/contents.json';
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   console.log('fetchCategories: Checking cache first');
@@ -185,9 +187,18 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
   console.log('refreshRemoteData: Forcing refresh from remote source');
 
   try {
-    console.log(`refreshRemoteData: Fetching from URL: ${CONTENTS_URL}`);
-    const contents = await fetchContentWithCorsHandling(CONTENTS_URL);
-    console.log('refreshRemoteData: Successfully retrieved data');
+    console.log(`refreshRemoteData: Trying primary URL first: ${CONTENTS_URL}`);
+    let contents;
+    
+    try {
+      contents = await fetchContentWithCorsHandling(CONTENTS_URL);
+      console.log('refreshRemoteData: Successfully retrieved data from primary URL');
+    } catch (primaryError) {
+      console.error('refreshRemoteData: Primary URL failed, trying fallback:', primaryError);
+      console.log(`refreshRemoteData: Fetching from fallback URL: ${FALLBACK_URL}`);
+      contents = await fetchContentWithCorsHandling(FALLBACK_URL);
+      console.log('refreshRemoteData: Successfully retrieved data from fallback URL');
+    }
 
     const transformedData = transformAwesomeVideoData(contents);
 

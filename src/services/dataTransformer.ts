@@ -120,6 +120,9 @@ const mapProjectToVideoItem = (
 export const fetchContentWithCorsHandling = async (url: string): Promise<any> => {
   console.log(`Fetching content from URL: ${url}`);
   
+  // S3 fallback URL if primary source fails
+  const S3_FALLBACK_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/contents.json';
+  
   try {
     // First attempt: Use no-cors mode with proper CORS headers
     const response = await fetch(url, {
@@ -150,42 +153,66 @@ export const fetchContentWithCorsHandling = async (url: string): Promise<any> =>
   } catch (error) {
     console.error('Error fetching content:', error);
     
-    // Second attempt: Try with CORS proxy
+    // Second attempt: Try with S3 fallback URL
     try {
-      console.log('Attempting to use CORS proxy');
-      const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      console.log(`Attempting to use S3 fallback URL: ${S3_FALLBACK_URL}`);
+      const fallbackResponse = await fetch(S3_FALLBACK_URL);
       
-      const proxyResponse = await fetch(corsProxyUrl);
-      if (!proxyResponse.ok) {
-        throw new Error(`Proxy HTTP error! Status: ${proxyResponse.status}`);
+      if (!fallbackResponse.ok) {
+        throw new Error(`Fallback HTTP error! Status: ${fallbackResponse.status}`);
       }
       
-      const proxyText = await proxyResponse.text();
-      console.log(`Received ${proxyText.length} bytes of data via proxy`);
+      const fallbackText = await fallbackResponse.text();
+      console.log(`Received ${fallbackText.length} bytes of data from S3 fallback`);
       
-      const proxyJson = JSON.parse(proxyText);
-      console.log('Content successfully parsed as JSON via proxy');
-      return proxyJson;
-    } catch (proxyError) {
-      console.error('CORS proxy attempt also failed:', proxyError);
-      
-      // Third attempt: Try with a different CORS proxy
       try {
-        console.log('Attempting with alternate CORS proxy');
-        const corsProxyAlt = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const fallbackJson = JSON.parse(fallbackText);
+        console.log('S3 fallback content successfully parsed as JSON');
+        return fallbackJson;
+      } catch (e) {
+        console.error('Failed to parse S3 fallback response as JSON:', e);
+        throw new Error('Invalid JSON response from S3 fallback');
+      }
+    } catch (fallbackError) {
+      console.error('S3 fallback attempt failed:', fallbackError);
+    
+      // Third attempt: Try with CORS proxy
+      try {
+        console.log('Attempting to use CORS proxy');
+        const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
         
-        const altProxyResponse = await fetch(corsProxyAlt);
-        if (!altProxyResponse.ok) {
-          throw new Error(`Alt proxy HTTP error! Status: ${altProxyResponse.status}`);
+        const proxyResponse = await fetch(corsProxyUrl);
+        if (!proxyResponse.ok) {
+          throw new Error(`Proxy HTTP error! Status: ${proxyResponse.status}`);
         }
         
-        const altProxyText = await altProxyResponse.text();
-        const altProxyJson = JSON.parse(altProxyText);
-        console.log('Content successfully parsed via alternate proxy');
-        return altProxyJson;
-      } catch (altProxyError) {
-        console.error('All proxies failed:', altProxyError);
-        throw new Error('Unable to fetch content: CORS issues detected');
+        const proxyText = await proxyResponse.text();
+        console.log(`Received ${proxyText.length} bytes of data via proxy`);
+        
+        const proxyJson = JSON.parse(proxyText);
+        console.log('Content successfully parsed as JSON via proxy');
+        return proxyJson;
+      } catch (proxyError) {
+        console.error('CORS proxy attempt also failed:', proxyError);
+        
+        // Fourth attempt: Try with a different CORS proxy
+        try {
+          console.log('Attempting with alternate CORS proxy');
+          const corsProxyAlt = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          
+          const altProxyResponse = await fetch(corsProxyAlt);
+          if (!altProxyResponse.ok) {
+            throw new Error(`Alt proxy HTTP error! Status: ${altProxyResponse.status}`);
+          }
+          
+          const altProxyText = await altProxyResponse.text();
+          const altProxyJson = JSON.parse(altProxyText);
+          console.log('Content successfully parsed via alternate proxy');
+          return altProxyJson;
+        } catch (altProxyError) {
+          console.error('All proxies failed:', altProxyError);
+          throw new Error('Unable to fetch content: CORS issues detected');
+        }
       }
     }
   }
