@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export type ThemeColors = {
@@ -44,6 +43,28 @@ export const gradientDirections = ["to right", "to left", "to top", "to bottom",
 
 // Predefined themes
 export const themes: Theme[] = [
+  {
+    name: "cyberpunkNeon",
+    colors: {
+      primary: "#FF2DA0",
+      secondary: "#00F0FF",
+      accent: "#4C1D95",
+      background: "#0B0D10",
+      text: "#E0FFFC"
+    },
+    fonts: {
+      heading: "JetBrains Mono",
+      body: "JetBrains Mono",
+      mono: "JetBrains Mono"
+    },
+    gradient: {
+      from: "#FF2DA0",
+      to: "#00F0FF",
+      direction: "to right"
+    },
+    iconStyle: "sharp",
+    borderRadius: "0.25rem"
+  },
   {
     name: "hyperTermBlack",
     colors: {

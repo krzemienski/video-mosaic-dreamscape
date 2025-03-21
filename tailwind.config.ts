@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -21,7 +22,8 @@ export default {
 			fontFamily: {
 				inter: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
 				sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-				mono: ["SF Mono", "monospace"],
+				mono: ["JetBrains Mono", "SF Mono", "monospace"],
+				sora: ["Sora", "sans-serif"],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -32,12 +34,14 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					hyperterm: "#9B00FF"
+					hyperterm: "#9B00FF",
+					magenta: "#FF2DA0",
+					cyan: "#00F0FF",
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))',
-					hyperterm: "#00AEEF"
+					hyperterm: "#00AEEF",
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -50,7 +54,7 @@ export default {
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))',
-					hyperterm: "#FF007F"
+					hyperterm: "#FF007F",
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -76,6 +80,13 @@ export default {
 					purple: "#9B00FF",
 					blue: "#00AEEF",
 					pink: "#FF007F"
+				},
+				brand: {
+					magenta: "#FF2DA0",
+					cyan: "#00F0FF",
+					purple: "#4C1D95",
+					asphalt: "#0B0D10",
+					glare: "#E0FFFC"
 				}
 			},
 			borderRadius: {
@@ -119,6 +130,13 @@ export default {
 				pulse: {
 					'0%, 100%': { opacity: '1' },
 					'50%': { opacity: '0.5' }
+				},
+				glitch: {
+					'0%, 100%': { transform: 'translate(0)' },
+					'20%': { transform: 'translate(-5px, 5px)' },
+					'40%': { transform: 'translate(-5px, -5px)' },
+					'60%': { transform: 'translate(5px, 5px)' },
+					'80%': { transform: 'translate(5px, -5px)' },
 				}
 			},
 			animation: {
@@ -128,7 +146,8 @@ export default {
 				'fade-in-up': 'fadeInUp 0.6s ease-out',
 				'fade-in-down': 'fadeInDown 0.6s ease-out',
 				'scale-in': 'scaleIn 0.6s ease-out',
-				'pulse-slow': 'pulse 3s ease-in-out infinite'
+				'pulse-slow': 'pulse 3s ease-in-out infinite',
+				'glitch': 'glitch 0.5s ease-in-out infinite'
 			}
 		}
 	},

@@ -1,54 +1,56 @@
 
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 96%;
+    --background: 228 22% 5%;
+    --foreground: 165 100% 94%;
 
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 96%;
+    --card: 228 22% 8%;
+    --card-foreground: 165 100% 94%;
 
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 228 22% 8%;
+    --popover-foreground: 165 100% 94%;
 
-    --primary: 282 100% 50%;
+    --primary: 328 100% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 196 100% 47%;
+    --secondary: 187 100% 50%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 15%;
+    --muted: 228 22% 15%;
     --muted-foreground: 0 0% 75%;
 
-    --accent: 328 100% 50%;
+    --accent: 275 70% 35%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 282 100% 50%;
+    --border: 228 22% 15%;
+    --input: 228 22% 15%;
+    --ring: 328 100% 59%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 282 100% 50%;
+    --sidebar-background: 228 22% 3%;
+    --sidebar-foreground: 165 100% 94%;
+    --sidebar-primary: 328 100% 59%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 282 100% 50%;
+    --sidebar-accent: 228 22% 10%;
+    --sidebar-accent-foreground: 165 100% 94%;
+    --sidebar-border: 228 22% 15%;
+    --sidebar-ring: 328 100% 59%;
     
     /* New theme properties */
-    --font-heading: 'Inter';
-    --font-body: 'Inter';
-    --font-mono: 'SF Mono';
-    --gradient: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+    --font-heading: 'JetBrains Mono';
+    --font-body: 'JetBrains Mono';
+    --font-mono: 'JetBrains Mono';
+    --gradient: linear-gradient(to right, #FF2DA0, #00F0FF);
     --icon-style: 'rounded';
   }
 }
@@ -60,15 +62,16 @@
 
   body {
     @apply bg-background text-foreground transition-colors duration-300 antialiased;
-    font-family: var(--font-body, 'Inter'), sans-serif;
+    font-family: var(--font-body, 'JetBrains Mono'), monospace;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading, 'Inter'), sans-serif;
+    font-family: var(--font-heading, 'JetBrains Mono'), monospace;
+    @apply tracking-wider uppercase;
   }
   
   code, pre {
-    font-family: var(--font-mono, 'SF Mono'), monospace;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
   }
 
   html {
@@ -111,6 +114,29 @@
   
   .gradient-bg {
     background: var(--gradient);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+  
+  .neon-magenta {
+    color: #FF2DA0;
+  }
+  
+  .electric-cyan {
+    color: #00F0FF;
+  }
+  
+  .cyberpunk-grid {
+    background-image: 
+      linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .text-wide {
+    letter-spacing: 0.05em;
   }
 }
 

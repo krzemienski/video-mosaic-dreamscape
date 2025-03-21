@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Film, Folder, Home, Info, Loader } from 'lucide-react';
 import { fetchCategories } from '@/services/videoApi';
 import { ExtendedCategory } from '@/types/video';
 import { toast } from 'sonner';
+import Logo, { LogoIcon } from '@/components/brand/Logo';
 
 interface CategoryItem {
   name: string;
@@ -133,13 +133,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     >
       <div className="flex flex-col h-full">
         <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Awesome Video</h2>
+          <div className="flex items-center justify-between mb-3">
+            <Logo type="full" size={32} />
           </div>
-          <p className="text-sm text-muted-foreground mt-1">From FFMPEG to playback, streaming video.</p>
+          <p className="text-sm text-muted-foreground font-mono tracking-wide">
+            From FFMPEG to playback, streaming video.
+          </p>
           
           {errorMessage && (
-            <div className="mt-2 text-xs text-amber-500 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-md">
+            <div className="mt-2 text-xs text-amber-500 bg-amber-950/30 p-2 rounded-md font-mono">
               {errorMessage}
             </div>
           )}
@@ -152,12 +154,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               className="flex items-center gap-2 px-4 py-3 hover:bg-sidebar-accent transition-colors duration-200"
               onClick={() => window.gtag?.('event', 'navigation', { action: 'home_click' })}
             >
-              <Home size={18} className="text-muted-foreground" />
-              <span>Home</span>
+              <Home size={18} className="text-brand-cyan" />
+              <span className="font-mono tracking-wide">Home</span>
             </Link>
             
             <div className="mt-2 mb-2">
-              <div className="px-4 py-2 text-xs text-muted-foreground flex items-center">
+              <div className="px-4 py-2 text-xs text-muted-foreground flex items-center font-mono tracking-wider">
                 CATEGORIES {isLoading ? (
                   <span className="ml-2 inline-flex items-center">
                     <Loader size={12} className="animate-spin mr-1" />
@@ -183,8 +185,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               className="flex items-center gap-2 px-4 py-3 hover:bg-sidebar-accent transition-colors duration-200 mt-2"
               onClick={() => window.gtag?.('event', 'navigation', { action: 'about_click' })}
             >
-              <Info size={18} className="text-muted-foreground" />
-              <span>About</span>
+              <Info size={18} className="text-brand-cyan" />
+              <span className="font-mono tracking-wide">About</span>
             </Link>
           </div>
         </nav>
@@ -195,13 +197,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             href={repoInfo.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-sm"
+            className="flex items-center gap-2 p-3 rounded-md bg-brand-magenta/10 hover:bg-brand-magenta/20 transition-colors text-sm"
             onClick={() => window.gtag?.('event', 'external_link', { destination: 'github_repo' })}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-cyan"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
             <div>
-              <div className="font-medium">{repoInfo.owner}/{repoInfo.name}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <div className="font-mono tracking-wide text-brand-magenta">{repoInfo.owner}/{repoInfo.name}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
                 <span>⭐ {repoInfo.stars}</span>
                 <span className="mx-1">•</span>
                 <span>Contribute</span>
@@ -210,8 +212,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </a>
         </div>
         
-        <div className="p-4 border-t border-sidebar-border text-xs text-muted-foreground text-center">
-          &copy; {new Date().getFullYear()} Awesome Video Resources
+        <div className="p-4 border-t border-sidebar-border text-xs text-muted-foreground text-center font-mono tracking-wide">
+          <LogoIcon size={24} className="inline-block mb-2" />
+          <div>&copy; {new Date().getFullYear()} Awesome Video Resources</div>
         </div>
       </div>
     </aside>
