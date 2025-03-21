@@ -1,4 +1,4 @@
-import { AwesomeVideoContents, ExtendedCategory, VideoItem } from '@/types/video';
+import { ExtendedCategory, VideoItem } from '@/types/video';
 
 // Function to convert awesome-video data to our ExtendedCategory format
 export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => {
@@ -113,6 +113,61 @@ const mapProjectToVideoItem = (
     description: project.description || '',
     tags: project.tags || [],
   };
+};
+
+// Helper function to fetch content using CORS proxy if needed
+export const fetchContentWithCorsHandling = async (url: string): Promise<any> => {
+  console.log(`Fetching content from URL: ${url}`);
+  
+  try {
+    // First try direct fetch with credentials: 'omit' which can help with CORS in some cases
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'omit'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const text = await response.text();
+    console.log(`Received ${text.length} bytes of data`);
+    
+    try {
+      const json = JSON.parse(text);
+      console.log('Content successfully parsed as JSON');
+      return json;
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', e);
+      throw new Error('Invalid JSON response');
+    }
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    
+    // Try with CORS proxy as a fallback
+    try {
+      console.log('Attempting to use CORS proxy');
+      const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      
+      const proxyResponse = await fetch(corsProxyUrl);
+      if (!proxyResponse.ok) {
+        throw new Error(`Proxy HTTP error! Status: ${proxyResponse.status}`);
+      }
+      
+      const proxyText = await proxyResponse.text();
+      console.log(`Received ${proxyText.length} bytes of data via proxy`);
+      
+      const proxyJson = JSON.parse(proxyText);
+      console.log('Content successfully parsed as JSON via proxy');
+      return proxyJson;
+    } catch (proxyError) {
+      console.error('CORS proxy attempt also failed:', proxyError);
+      throw new Error('Unable to fetch content: CORS issues detected');
+    }
+  }
 };
 
 // Helper function to examine and debug the URL content

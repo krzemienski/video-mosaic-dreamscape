@@ -1,5 +1,6 @@
+
 import { ExtendedCategory, VideoResource } from '@/types/video';
-import { transformAwesomeVideoData, examineUrlContent } from './dataTransformer';
+import { transformAwesomeVideoData, fetchContentWithCorsHandling } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
 
 // Primary URL to fetch the contents.json from CloudFront
@@ -18,7 +19,7 @@ export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
 
   try {
     console.log(`fetchCategories: Fetching data from URL: ${CONTENTS_URL}`);
-    const contents = await examineUrlContent(CONTENTS_URL);
+    const contents = await fetchContentWithCorsHandling(CONTENTS_URL);
     console.log('fetchCategories: Successfully retrieved and parsed data');
 
     const transformedData = transformAwesomeVideoData(contents);
@@ -185,7 +186,7 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
 
   try {
     console.log(`refreshRemoteData: Fetching from URL: ${CONTENTS_URL}`);
-    const contents = await examineUrlContent(CONTENTS_URL);
+    const contents = await fetchContentWithCorsHandling(CONTENTS_URL);
     console.log('refreshRemoteData: Successfully retrieved data');
 
     const transformedData = transformAwesomeVideoData(contents);
@@ -203,4 +204,3 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
     throw error;
   }
 };
-

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Film, Folder, Home, Info, RefreshCw } from 'lucide-react';
@@ -78,16 +77,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     } catch (error: any) {
       console.error('Error loading categories for sidebar:', error);
       
-      // Check for CORS related errors
-      if (error.message && (
-          error.message.includes('CORS') || 
-          error.message.includes('Failed to fetch') || 
-          error.message.includes('Network Error')
-      )) {
-        setErrorMessage('CORS issue detected. The application is using fallback data.');
-        toast.error('CORS issue detected. Using fallback data.');
+      if (error.message && error.message.includes('CORS')) {
+        setErrorMessage('We\'re having trouble accessing the video resources due to CORS restrictions. Please try refreshing or come back later.');
+        toast.error('CORS issue detected. Unable to load content.');
       } else {
-        setErrorMessage('Failed to load categories');
+        setErrorMessage('Failed to load categories. Please try again later.');
         toast.error('Failed to load categories');
       }
     } finally {
@@ -110,16 +104,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     } catch (error: any) {
       console.error('Error refreshing data:', error);
       
-      // Check for CORS related errors
-      if (error.message && (
-          error.message.includes('CORS') || 
-          error.message.includes('Failed to fetch') || 
-          error.message.includes('Network Error')
-      )) {
-        setErrorMessage('CORS issue detected. The application is using fallback data.');
-        toast.error('CORS issue detected. Using fallback data.');
+      if (error.message && error.message.includes('CORS')) {
+        setErrorMessage('We\'re having trouble accessing the video resources due to CORS restrictions. Please try refreshing or come back later.');
+        toast.error('CORS issue detected. Unable to refresh content.');
       } else {
-        setErrorMessage('Failed to refresh data');
+        setErrorMessage('Failed to refresh data. Please try again later.');
         toast.error('Failed to refresh data');
       }
     } finally {
