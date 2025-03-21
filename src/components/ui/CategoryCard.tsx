@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Folder } from 'lucide-react';
+import { ChevronRight, BookOpen, Code, FileText, Package, Archive, Radio, Film, Library } from 'lucide-react';
 
 export interface Category {
   id: string;
@@ -16,6 +16,27 @@ interface CategoryCardProps {
   category: Category;
 }
 
+// Map category names to appropriate icons
+const getCategoryIcon = (categoryName: string) => {
+  const name = categoryName.toLowerCase();
+  
+  if (name.includes('codec') || name.includes('compression')) {
+    return <Archive size={48} className="text-primary/70" />;
+  } else if (name.includes('encoding') || name.includes('transcoding')) {
+    return <Code size={48} className="text-primary/70" />;
+  } else if (name.includes('stream') || name.includes('broadcast')) {
+    return <Radio size={48} className="text-primary/70" />;
+  } else if (name.includes('player') || name.includes('playback')) {
+    return <Film size={48} className="text-primary/70" />;
+  } else if (name.includes('docs') || name.includes('resources')) {
+    return <BookOpen size={48} className="text-primary/70" />;
+  } else if (name.includes('tool') || name.includes('software')) {
+    return <Package size={48} className="text-primary/70" />;
+  } else {
+    return <Library size={48} className="text-primary/70" />;
+  }
+};
+
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   return (
     <Link 
@@ -23,7 +44,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-scale-in group"
     >
       <div className="relative">
-        <div className="aspect-video w-full bg-muted/30 overflow-hidden">
+        <div className="aspect-video w-full bg-gradient-to-br from-primary/5 to-primary/20 overflow-hidden flex items-center justify-center">
           {category.thumbnail ? (
             <img 
               src={category.thumbnail} 
@@ -31,8 +52,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
               className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted/20">
-              <Folder size={48} className="text-muted-foreground/50" />
+            <div className="w-full h-full flex items-center justify-center">
+              {getCategoryIcon(category.name)}
             </div>
           )}
         </div>
@@ -42,7 +63,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
           <h3 className="text-lg font-medium">{category.name}</h3>
           {category.count !== undefined && (
             <span className="text-xs font-medium px-2 py-1 rounded-full bg-accent text-accent-foreground">
-              {category.count} videos
+              {category.count} resources
             </span>
           )}
         </div>
@@ -50,7 +71,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
           <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{category.description}</p>
         )}
         <div className="flex items-center justify-end text-sm font-medium text-primary group-hover:underline transition-all">
-          View category <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          View resources <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
     </Link>

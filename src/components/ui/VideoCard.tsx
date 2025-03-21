@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, ExternalLink } from 'lucide-react';
+import { Calendar, ExternalLink, Github, BookOpen, Code, FileText } from 'lucide-react';
 import { VideoResource } from '@/services/api';
 
 interface VideoCardProps {
@@ -9,6 +10,22 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
+  // Determine icon based on URL pattern
+  const getResourceIcon = () => {
+    const url = video.url.toLowerCase();
+    if (url.includes('github.com')) {
+      return <Github size={14} />;
+    } else if (url.includes('docs') || url.includes('documentation')) {
+      return <BookOpen size={14} />;
+    } else if (url.includes('tutorial') || url.includes('guide')) {
+      return <FileText size={14} />;
+    } else if (url.includes('api') || url.includes('sdk')) {
+      return <Code size={14} />;
+    } else {
+      return <ExternalLink size={14} />;
+    }
+  };
+
   if (view === 'list') {
     return (
       <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-scale-in">
@@ -32,12 +49,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
             <h3 className="text-lg font-medium mb-2 text-balance">{video.title}</h3>
             <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{video.description}</p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mt-auto">
-              {video.duration && (
-                <div className="flex items-center gap-1">
-                  <Clock size={14} />
-                  <span>{video.duration}</span>
-                </div>
-              )}
               {video.date && (
                 <div className="flex items-center gap-1">
                   <Calendar size={14} />
@@ -55,7 +66,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm font-medium text-primary hover:underline transition-all"
               >
-                Watch <ExternalLink size={14} />
+                Explore {getResourceIcon()}
               </a>
             </div>
           </div>
@@ -85,14 +96,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
         <div className="p-4 flex flex-col flex-1">
           <h3 className="text-md font-medium mb-2 line-clamp-2 text-balance">{video.title}</h3>
           <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{video.description}</p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-auto">
-            {video.duration && (
-              <div className="flex items-center gap-1">
-                <Clock size={14} />
-                <span>{video.duration}</span>
-              </div>
-            )}
-          </div>
           <div className="mt-4 flex items-center justify-between">
             <div className="text-xs font-medium px-2 py-1 rounded-full bg-accent text-accent-foreground">
               {video.subcategory || video.category}
@@ -103,7 +106,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
             >
-              Watch <ExternalLink size={14} />
+              Explore {getResourceIcon()}
             </a>
           </div>
         </div>
@@ -138,7 +141,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
           rel="noopener noreferrer"
           className="mt-auto flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all self-end"
         >
-          Watch <ExternalLink size={14} />
+          Explore {getResourceIcon()}
         </a>
       </div>
     </div>

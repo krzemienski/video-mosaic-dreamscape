@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Film, Folder, Home, Info, RefreshCw, Github } from 'lucide-react';
-import { fetchCategories, refreshRemoteData } from '@/services/videoApi';
+import { ChevronDown, ChevronRight, Film, Folder, Home, Info, Loader } from 'lucide-react';
+import { fetchCategories } from '@/services/videoApi';
 import { ExtendedCategory } from '@/types/video';
 import { toast } from 'sonner';
 
@@ -59,7 +59,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [categories, setCategories] = useState<ExtendedCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const loadCategories = async () => {
@@ -79,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       console.error('Error loading categories for sidebar:', error);
       
       if (error.message && error.message.includes('CORS')) {
-        setErrorMessage('We\'re having trouble accessing the video resources due to CORS restrictions. Please try refreshing or come back later.');
+        setErrorMessage('We\'re having trouble accessing the resources due to CORS restrictions. Please try refreshing or come back later.');
         toast.error('CORS issue detected. Unable to load content.');
       } else {
         setErrorMessage('Failed to load categories. Please try again later.');
@@ -89,33 +88,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       setIsLoading(false);
     }
   };
-
-  const handleRefresh = async () => {
-    if (isRefreshing) return;
-    
-    try {
-      setIsRefreshing(true);
-      setErrorMessage(null);
-      toast.loading('Refreshing data...');
-      
-      const freshData = await refreshRemoteData();
-      setCategories(freshData);
-      
-      toast.success('Data refreshed successfully');
-    } catch (error: any) {
-      console.error('Error refreshing data:', error);
-      
-      if (error.message && error.message.includes('CORS')) {
-        setErrorMessage('We\'re having trouble accessing the video resources due to CORS restrictions. Please try refreshing or come back later.');
-        toast.error('CORS issue detected. Unable to refresh content.');
-      } else {
-        setErrorMessage('Failed to refresh data. Please try again later.');
-        toast.error('Failed to refresh data');
-      }
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
   
   useEffect(() => {
     loadCategories();
@@ -123,10 +95,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
   // GitHub repository information
   const repoInfo = {
-    name: "video-resources-library",
-    owner: "open-source-community",
-    stars: 256,
-    url: "https://github.com/open-source-community/video-resources-library"
+    name: "awesome-video",
+    owner: "krzemienski",
+    stars: 4500,
+    url: "https://github.com/krzemienski/awesome-video"
   };
 
   return (
@@ -137,17 +109,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       <div className="flex flex-col h-full">
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Video Resources</h2>
-            <button 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="p-1 hover:bg-sidebar-accent rounded-full text-muted-foreground transition-colors"
-              title="Refresh data"
-            >
-              <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
-            </button>
+            <h2 className="text-xl font-semibold">Awesome Video</h2>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Curated learning materials</p>
+          <p className="text-sm text-muted-foreground mt-1">From FFMPEG to playback, streaming video.</p>
           
           {errorMessage && (
             <div className="mt-2 text-xs text-amber-500 bg-amber-50 dark:bg-amber-950/30 p-2 rounded-md">
@@ -167,12 +131,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             </Link>
             
             <div className="mt-2 mb-2">
-              <div className="px-4 py-2 text-xs text-muted-foreground">
-                CATEGORIES {isLoading ? '(Loading...)' : `(${categories.length})`}
+              <div className="px-4 py-2 text-xs text-muted-foreground flex items-center">
+                CATEGORIES {isLoading ? (
+                  <span className="ml-2 inline-flex items-center">
+                    <Loader size={12} className="animate-spin mr-1" />
+                    Loading...
+                  </span>
+                ) : `(${categories.length})`}
               </div>
               
               {isLoading ? (
-                <div className="px-4 py-3 text-sm text-muted-foreground">Loading categories...</div>
+                <div className="px-4 py-3 text-sm text-muted-foreground flex items-center">
+                  <Loader size={16} className="animate-spin mr-2" />
+                  Loading categories...
+                </div>
               ) : (
                 categories.map((category) => (
                   <AccordionItem key={category.slug} category={category} />
@@ -198,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             rel="noopener noreferrer"
             className="flex items-center gap-2 p-3 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-sm"
           >
-            <Github size={16} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
             <div>
               <div className="font-medium">{repoInfo.owner}/{repoInfo.name}</div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -211,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         </div>
         
         <div className="p-4 border-t border-sidebar-border text-xs text-muted-foreground text-center">
-          &copy; {new Date().getFullYear()} Video Resources
+          &copy; {new Date().getFullYear()} Awesome Video Resources
         </div>
       </div>
     </aside>

@@ -7,6 +7,8 @@ import { searchVideos } from '@/services/api';
 import VideoCard from '@/components/ui/VideoCard';
 import useViewState from '@/hooks/useViewState';
 import ViewToggle from '@/components/ui/ViewToggle';
+import { Loader } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SearchPage = () => {
   const location = useLocation();
@@ -32,7 +34,7 @@ const SearchPage = () => {
         const data = await searchVideos(query);
         setResults(data);
       } catch (err) {
-        setError("Failed to search videos. Please try again.");
+        setError("Failed to search resources. Please try again.");
         console.error('Search error:', err);
       } finally {
         setIsLoading(false);
@@ -44,12 +46,12 @@ const SearchPage = () => {
 
   const renderSkeletons = () => {
     return Array(6).fill(0).map((_, i) => (
-      <div key={i} className="glass-card rounded-lg overflow-hidden animate-pulse">
-        <div className="aspect-video w-full bg-muted/30"></div>
+      <div key={i} className="glass-card rounded-lg overflow-hidden">
+        <Skeleton className="aspect-video w-full" />
         <div className="p-4">
-          <div className="h-6 bg-muted/40 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-muted/30 rounded w-full mb-1"></div>
-          <div className="h-4 bg-muted/30 rounded w-2/3"></div>
+          <Skeleton className="h-6 w-3/4 mb-2" />
+          <Skeleton className="h-4 w-full mb-1" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       </div>
     ));
@@ -71,8 +73,8 @@ const SearchPage = () => {
       <div className={`grid gap-6 ${view === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 
         view === 'list' ? 'grid-cols-1' : 
         'columns-1 md:columns-2 lg:columns-3 space-y-6'}`}>
-        {results.map((video) => (
-          <VideoCard key={video.id} video={video} view={view} />
+        {results.map((resource) => (
+          <VideoCard key={resource.id} video={resource} view={view} />
         ))}
       </div>
     );
@@ -84,7 +86,12 @@ const SearchPage = () => {
         <div className="mb-8 animate-fade-in-down">
           <h1 className="text-3xl font-bold mb-2">Search Results: "{query}"</h1>
           <p className="text-muted-foreground">
-            {!isLoading && `Found ${results.length} results`}
+            {isLoading ? (
+              <span className="flex items-center">
+                <Loader size={14} className="animate-spin mr-2" />
+                Searching resources...
+              </span>
+            ) : `Found ${results.length} resources`}
           </p>
         </div>
 

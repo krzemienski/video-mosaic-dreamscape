@@ -11,7 +11,7 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
-  placeholder = "Search videos...",
+  placeholder = "Search resources...",
   className = "" 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
