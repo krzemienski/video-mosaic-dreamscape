@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Film, Folder, Home, Info, Loader } from 'lucide-react';
@@ -212,9 +213,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </a>
         </div>
         
-        <div className="p-4 border-t border-sidebar-border text-xs text-muted-foreground text-center font-mono tracking-wide">
+        <div className="p-4 border-t border-sidebar-border text-center">
           <LogoIcon size={24} className="inline-block mb-2" />
-          <div>&copy; {new Date().getFullYear()} Awesome Video Resources</div>
         </div>
       </div>
     </aside>

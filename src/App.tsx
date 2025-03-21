@@ -10,7 +10,6 @@ import NotFound from "./pages/NotFound";
 import CategoryPage from "./pages/CategoryPage";
 import SearchPage from "./pages/SearchPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import ThemeSelector from "./components/ThemeSelector/ThemeSelector";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,7 +40,6 @@ const App = () => {
               <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <ThemeSelector />
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
