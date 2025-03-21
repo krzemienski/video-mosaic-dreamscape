@@ -1,3 +1,4 @@
+
 import { ExtendedCategory, VideoItem } from '@/types/video';
 
 // Function to convert awesome-video data to our ExtendedCategory format
@@ -120,12 +121,14 @@ export const fetchContentWithCorsHandling = async (url: string): Promise<any> =>
   console.log(`Fetching content from URL: ${url}`);
   
   try {
-    // First try direct fetch with credentials: 'omit' which can help with CORS in some cases
+    // First attempt: Use no-cors mode with proper CORS headers
     const response = await fetch(url, {
+      method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
+      mode: 'cors',
       credentials: 'omit'
     });
     
@@ -147,7 +150,7 @@ export const fetchContentWithCorsHandling = async (url: string): Promise<any> =>
   } catch (error) {
     console.error('Error fetching content:', error);
     
-    // Try with CORS proxy as a fallback
+    // Second attempt: Try with CORS proxy
     try {
       console.log('Attempting to use CORS proxy');
       const corsProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
@@ -165,7 +168,25 @@ export const fetchContentWithCorsHandling = async (url: string): Promise<any> =>
       return proxyJson;
     } catch (proxyError) {
       console.error('CORS proxy attempt also failed:', proxyError);
-      throw new Error('Unable to fetch content: CORS issues detected');
+      
+      // Third attempt: Try with a different CORS proxy
+      try {
+        console.log('Attempting with alternate CORS proxy');
+        const corsProxyAlt = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        
+        const altProxyResponse = await fetch(corsProxyAlt);
+        if (!altProxyResponse.ok) {
+          throw new Error(`Alt proxy HTTP error! Status: ${altProxyResponse.status}`);
+        }
+        
+        const altProxyText = await altProxyResponse.text();
+        const altProxyJson = JSON.parse(altProxyText);
+        console.log('Content successfully parsed via alternate proxy');
+        return altProxyJson;
+      } catch (altProxyError) {
+        console.error('All proxies failed:', altProxyError);
+        throw new Error('Unable to fetch content: CORS issues detected');
+      }
     }
   }
 };
