@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layouts/MainLayout';
 import CategoryCard from '@/components/ui/CategoryCard';
@@ -91,23 +90,12 @@ const Index = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 text-center animate-fade-in-down">
-          <span className="inline-block text-xs font-medium text-primary bg-primary/10 rounded-full px-3 py-1 mb-3">
-            AWESOME VIDEO RESOURCES
-          </span>
-          <h1 className="text-4xl font-bold mb-4">Awesome Video</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            A curated collection of high-quality resources for video technology,
-            from FFMPEG to playback, encoding, and streaming.
-          </p>
-          
-          {isLoading && (
-            <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">
-              <Loader size={16} className="animate-spin mr-2" />
-              Loading resources...
-            </div>
-          )}
-        </div>
+        {isLoading && (
+          <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">
+            <Loader size={16} className="animate-spin mr-2" />
+            Loading resources...
+          </div>
+        )}
 
         {error ? (
           <ErrorState message={error} onRetry={loadCategories} />
