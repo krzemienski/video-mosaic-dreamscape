@@ -16,6 +16,15 @@ interface AccordionItemProps {
   category: CategoryItem;
 }
 
+interface GithubRepoInfo {
+  stargazers_count: number;
+  html_url: string;
+  owner: {
+    login: string;
+  };
+  name: string;
+}
+
 const AccordionItem: React.FC<AccordionItemProps> = ({ category }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,6 +69,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const [categories, setCategories] = useState<ExtendedCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [repoInfo, setRepoInfo] = useState({
+    name: "awesome-video",
+    owner: "krzemienski",
+    stars: 1600,
+    url: "https://github.com/krzemienski/awesome-video"
+  });
 
   const loadCategories = async () => {
     try {
@@ -89,17 +104,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     }
   };
   
+  const fetchGithubRepoInfo = async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/krzemienski/awesome-video');
+      if (response.ok) {
+        const data: GithubRepoInfo = await response.json();
+        setRepoInfo({
+          name: data.name,
+          owner: data.owner.login,
+          stars: data.stargazers_count,
+          url: data.html_url
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching GitHub repo information:', error);
+    }
+  };
+  
   useEffect(() => {
     loadCategories();
+    fetchGithubRepoInfo();
   }, []);
-
-  // Correct GitHub repository information
-  const repoInfo = {
-    name: "awesome-video",
-    owner: "krzemienski",
-    stars: 1600,
-    url: "https://github.com/krzemienski/awesome-video"
-  };
 
   return (
     <aside 
