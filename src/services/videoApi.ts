@@ -1,16 +1,9 @@
-
 import { ExtendedCategory, VideoResource } from '@/types/video';
 import { transformAwesomeVideoData, examineUrlContent } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
-import { fallbackCategories } from './fallbackData';
 
 // Primary URL to fetch the contents.json from CloudFront
 const CONTENTS_URL = 'https://d2l6iuu30u6bxw.cloudfront.net/contents.json';
-// Fallback URLs in case the primary one fails
-const FALLBACK_URLS = [
-  'https://raw.githubusercontent.com/krzemienski/awesome-video/main/contents.json',
-  'https://raw.githubusercontent.com/krzemienski/awesome-video/HEAD/contents.json'
-];
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   console.log('fetchCategories: Checking cache first');
@@ -24,90 +17,23 @@ export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   }
 
   try {
-    console.log(`fetchCategories: Fetching data from remote URL: ${CONTENTS_URL}`);
+    console.log(`fetchCategories: Fetching data from URL: ${CONTENTS_URL}`);
+    const contents = await examineUrlContent(CONTENTS_URL);
+    console.log('fetchCategories: Successfully retrieved and parsed data');
 
-    // First try the primary URL
-    try {
-      const contents = await examineUrlContent(CONTENTS_URL);
-      console.log('fetchCategories: Successfully retrieved and parsed data from primary URL');
+    const transformedData = transformAwesomeVideoData(contents);
 
-      const transformedData = transformAwesomeVideoData(contents);
-
-      if (transformedData && transformedData.length > 0) {
-        console.log(`fetchCategories: Transformation successful, got ${transformedData.length} categories`);
-        updateCache(transformedData);
-        return transformedData;
-      }
-
-      console.warn('fetchCategories: Primary URL returned empty data after transformation');
-    } catch (primaryError) {
-      // If error contains CORS message, just use fallback data immediately
-      if (primaryError instanceof Error && 
-          (primaryError.message.includes('CORS') || 
-           primaryError.message.includes('Failed to fetch'))) {
-        console.error('fetchCategories: CORS issue detected with primary URL, using fallback data');
-        const fallbackData = fallbackCategories();
-        updateCache(fallbackData);
-        return fallbackData;
-      }
-      
-      console.error('fetchCategories: Error with primary URL:', primaryError);
+    if (transformedData && transformedData.length > 0) {
+      console.log(`fetchCategories: Transformation successful, got ${transformedData.length} categories`);
+      updateCache(transformedData);
+      return transformedData;
+    } else {
+      console.error('fetchCategories: Transformation returned empty data');
+      throw new Error('Data transformation returned empty result');
     }
-
-    // Try fallback URLs if primary fails
-    for (const fallbackUrl of FALLBACK_URLS) {
-      try {
-        console.log(`fetchCategories: Trying fallback URL: ${fallbackUrl}`);
-        const contents = await examineUrlContent(fallbackUrl);
-        console.log(`fetchCategories: Successfully retrieved and parsed data from fallback URL: ${fallbackUrl}`);
-
-        const transformedData = transformAwesomeVideoData(contents);
-
-        if (transformedData && transformedData.length > 0) {
-          console.log(`fetchCategories: Fallback transformation successful, got ${transformedData.length} categories`);
-          updateCache(transformedData);
-          return transformedData;
-        }
-
-        console.warn(`fetchCategories: Fallback URL ${fallbackUrl} returned empty data after transformation`);
-      } catch (fallbackError) {
-        console.error(`fetchCategories: Error with fallback URL ${fallbackUrl}:`, fallbackError);
-      }
-    }
-
-    // If all remote URLs fail, try loading from local file as last resort
-    try {
-      console.log('fetchCategories: All remote URLs failed, trying local file as backup');
-      const response = await fetch('/contents.json');
-
-      if (!response.ok) {
-        throw new Error(`Failed to load local contents file: ${response.status}`);
-      }
-
-      const contents = await response.json();
-      console.log('fetchCategories: Successfully loaded and parsed local contents file');
-
-      const transformedData = transformAwesomeVideoData(contents);
-
-      if (transformedData && transformedData.length > 0) {
-        console.log(`fetchCategories: Local file transformation successful, got ${transformedData.length} categories`);
-        updateCache(transformedData);
-        return transformedData;
-      }
-    } catch (localError) {
-      console.error('fetchCategories: Error loading local backup file:', localError);
-    }
-
-    // If everything fails, use the fallback data
-    console.warn('fetchCategories: All data sources failed. Falling back to demo data');
-    return fallbackCategories();
-
   } catch (error) {
-    console.error('Error fetching data:', error);
-
-    // Fall back to demo data if fetch fails
-    console.log('fetchCategories: Falling back to demo data');
-    return fallbackCategories();
+    console.error('Error fetching categories:', error);
+    throw error;
   }
 };
 
@@ -258,89 +184,23 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
   console.log('refreshRemoteData: Forcing refresh from remote source');
 
   try {
-    // Try primary CloudFront URL first
-    console.log(`refreshRemoteData: Fetching from primary URL: ${CONTENTS_URL}`);
-    try {
-      const contents = await examineUrlContent(CONTENTS_URL);
-      console.log('refreshRemoteData: Successfully retrieved data from primary URL');
+    console.log(`refreshRemoteData: Fetching from URL: ${CONTENTS_URL}`);
+    const contents = await examineUrlContent(CONTENTS_URL);
+    console.log('refreshRemoteData: Successfully retrieved data');
 
-      const transformedData = transformAwesomeVideoData(contents);
+    const transformedData = transformAwesomeVideoData(contents);
 
-      if (transformedData && transformedData.length > 0) {
-        console.log(`refreshRemoteData: Transformation successful, got ${transformedData.length} categories`);
-        updateCache(transformedData);
-        return transformedData;
-      }
-
-      console.warn('refreshRemoteData: Primary URL returned empty data after transformation');
-    } catch (primaryError) {
-      // If error contains CORS message, just use fallback data immediately
-      if (primaryError instanceof Error && 
-          (primaryError.message.includes('CORS') || 
-           primaryError.message.includes('Failed to fetch'))) {
-        console.error('refreshRemoteData: CORS issue detected with primary URL, using fallback data');
-        const fallbackData = fallbackCategories();
-        updateCache(fallbackData);
-        return fallbackData;
-      }
-      
-      console.error('refreshRemoteData: Error with primary URL:', primaryError);
+    if (transformedData && transformedData.length > 0) {
+      console.log(`refreshRemoteData: Transformation successful, got ${transformedData.length} categories`);
+      updateCache(transformedData);
+      return transformedData;
+    } else {
+      console.error('refreshRemoteData: Transformation returned empty data');
+      throw new Error('Data transformation returned empty result');
     }
-
-    // Try fallback URLs if primary fails
-    for (const fallbackUrl of FALLBACK_URLS) {
-      try {
-        console.log(`refreshRemoteData: Trying fallback URL: ${fallbackUrl}`);
-        const contents = await examineUrlContent(fallbackUrl);
-        console.log(`refreshRemoteData: Successfully retrieved data from fallback URL: ${fallbackUrl}`);
-
-        const transformedData = transformAwesomeVideoData(contents);
-
-        if (transformedData && transformedData.length > 0) {
-          console.log(`refreshRemoteData: Fallback transformation successful, got ${transformedData.length} categories`);
-          updateCache(transformedData);
-          return transformedData;
-        }
-
-        console.warn(`refreshRemoteData: Fallback URL ${fallbackUrl} returned empty data after transformation`);
-      } catch (fallbackError) {
-        console.error(`refreshRemoteData: Error with fallback URL ${fallbackUrl}:`, fallbackError);
-      }
-    }
-
-    // If all remote URLs fail, return the current cache without updating
-    const { data: cachedData } = getCachedData();
-    if (cachedData && cachedData.length > 0) {
-      console.log('refreshRemoteData: Remote refresh failed, returning existing cache');
-      return cachedData;
-    }
-
-    // If no cache exists, try local file
-    try {
-      console.log('refreshRemoteData: No cache available, trying local file');
-      const response = await fetch('/contents.json');
-
-      if (!response.ok) {
-        throw new Error(`Failed to load local contents file: ${response.status}`);
-      }
-
-      const contents = await response.json();
-      const transformedData = transformAwesomeVideoData(contents);
-
-      if (transformedData && transformedData.length > 0) {
-        console.log(`refreshRemoteData: Local file transformation successful, got ${transformedData.length} categories`);
-        updateCache(transformedData);
-        return transformedData;
-      }
-    } catch (localError) {
-      console.error('refreshRemoteData: Error loading local backup file:', localError);
-    }
-
-    // If everything fails, use fallback data
-    console.warn('refreshRemoteData: All data sources failed. Using fallback data');
-    return fallbackCategories();
   } catch (error) {
     console.error('Error refreshing data:', error);
-    throw new Error('Failed to refresh data from remote source');
+    throw error;
   }
 };
+
