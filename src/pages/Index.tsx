@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layouts/MainLayout';
 import CategoryCard from '@/components/ui/CategoryCard';
@@ -20,6 +21,13 @@ const Index = () => {
       setError(null);
       const data = await fetchCategories();
       console.log(`Index: Received ${data.length} categories from API`);
+      
+      // Track successful data load
+      window.gtag?.('event', 'data_load', { 
+        event_category: 'api',
+        event_label: 'categories_loaded',
+        value: data.length
+      });
 
       if (data.length === 0) {
         console.error("Index: No categories returned from API");
@@ -28,6 +36,12 @@ const Index = () => {
           title: "No data found",
           description: "We couldn't find any categories to display.",
           variant: "destructive",
+        });
+        
+        // Track error event
+        window.gtag?.('event', 'error', { 
+          event_category: 'api',
+          event_label: 'no_categories_found'
         });
         return;
       }
@@ -56,6 +70,14 @@ const Index = () => {
     } catch (err) {
       console.error("Index: Error loading categories", err);
       setError("Failed to load categories. Please try again.");
+      
+      // Track error event
+      window.gtag?.('event', 'error', { 
+        event_category: 'api',
+        event_label: 'categories_load_failed',
+        error_message: err instanceof Error ? err.message : 'Unknown error'
+      });
+      
       toast({
         title: "Error loading data",
         description: "There was a problem loading the categories.",
@@ -69,6 +91,13 @@ const Index = () => {
   useEffect(() => {
     console.log("Index: Component mounted, loading categories");
     loadCategories();
+    
+    // Track page view
+    window.gtag?.('event', 'page_view', {
+      page_title: 'Home',
+      page_location: window.location.href,
+      page_path: '/'
+    });
   }, []);
 
   const renderSkeletons = () => {

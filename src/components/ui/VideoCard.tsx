@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ExternalLink, Github, BookOpen, Code, FileText } from 'lucide-react';
@@ -24,6 +23,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
     } else {
       return <ExternalLink size={14} />;
     }
+  };
+  
+  // Track when user clicks on a resource
+  const trackResourceClick = () => {
+    window.gtag?.('event', 'resource_click', {
+      event_category: 'engagement',
+      event_label: video.title,
+      resource_url: video.url,
+      resource_category: video.category,
+      resource_subcategory: video.subcategory || 'none'
+    });
   };
 
   if (view === 'list') {
@@ -65,6 +75,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-sm font-medium text-primary hover:underline transition-all"
+                onClick={trackResourceClick}
               >
                 Explore {getResourceIcon()}
               </a>
@@ -75,29 +86,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
     );
   }
 
-  if (view === 'grid') {
+  // Masonry View (most compact, make this the default)
+  if (view === 'masonry' || view === 'grid') {
     return (
-      <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col animate-scale-in">
-        <div className="relative">
-          <div className="aspect-video w-full bg-muted/30 overflow-hidden">
-            {video.thumbnail ? (
-              <img 
-                src={video.thumbnail} 
-                alt={video.title} 
-                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted/20">
-                <span className="text-muted-foreground">No thumbnail</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="p-4 flex flex-col flex-1">
-          <h3 className="text-md font-medium mb-2 line-clamp-2 text-balance">{video.title}</h3>
-          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{video.description}</p>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-xs font-medium px-2 py-1 rounded-full bg-accent text-accent-foreground">
+      <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-scale-in">
+        <div className="p-3 flex flex-col h-full">
+          <h3 className="text-sm font-medium mb-1 line-clamp-2 text-balance">{video.title}</h3>
+          {video.description && (
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
+          )}
+          <div className="mt-auto flex items-center justify-between">
+            <div className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/70 text-accent-foreground">
               {video.subcategory || video.category}
             </div>
             <a 
@@ -105,6 +104,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
+              onClick={trackResourceClick}
             >
               Explore {getResourceIcon()}
             </a>
@@ -114,35 +114,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
     );
   }
 
-  // Masonry View
+  // Grid View - This will now be more compact too, but we keep it for compatibility
   return (
     <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col animate-scale-in">
-      <div className="relative">
-        <div className="aspect-video w-full bg-muted/30 overflow-hidden">
-          {video.thumbnail ? (
-            <img 
-              src={video.thumbnail} 
-              alt={video.title} 
-              className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted/20">
-              <span className="text-muted-foreground">No thumbnail</span>
-            </div>
-          )}
+      <div className="p-3 flex flex-col h-full">
+        <h3 className="text-sm font-medium mb-1 line-clamp-2 text-balance">{video.title}</h3>
+        {video.description && (
+          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
+        )}
+        <div className="mt-auto flex items-center justify-between">
+          <div className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/70 text-accent-foreground">
+            {video.subcategory || video.category}
+          </div>
+          <a 
+            href={video.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
+            onClick={trackResourceClick}
+          >
+            Explore {getResourceIcon()}
+          </a>
         </div>
-      </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-md font-medium mb-2 text-balance">{video.title}</h3>
-        <p className="text-xs text-muted-foreground mb-3">{video.description}</p>
-        <a 
-          href={video.url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="mt-auto flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all self-end"
-        >
-          Explore {getResourceIcon()}
-        </a>
       </div>
     </div>
   );
