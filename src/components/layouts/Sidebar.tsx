@@ -97,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const repoInfo = {
     name: "awesome-video",
     owner: "krzemienski",
-    stars: 7800,
+    stars: 1600,
     url: "https://github.com/krzemienski/awesome-video"
   };
 
