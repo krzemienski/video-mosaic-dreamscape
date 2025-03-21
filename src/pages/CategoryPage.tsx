@@ -19,7 +19,7 @@ interface SubcategoryOption {
 const CategoryPage = () => {
   const { categorySlug, subcategorySlug } = useParams<{ categorySlug: string; subcategorySlug?: string }>();
   const [category, setCategory] = useState<ExtendedCategory | null>(null);
-  const [videos, setVideos] = useState<VideoResource[]>([]);
+  const [projects, setProjects] = useState<VideoResource[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useViewState('grid');
@@ -49,18 +49,18 @@ const CategoryPage = () => {
         return;
       }
       
-      console.log(`CategoryPage: Found category "${categoryData.name}" with ${categoryData.videos?.length || 0} videos`);
+      console.log(`CategoryPage: Found category "${categoryData.name}" with ${categoryData.videos?.length || 0} projects`);
       setCategory(categoryData);
       
       // Fetch videos
-      console.log(`CategoryPage: Fetching videos for category "${categorySlug}" and subcategory "${selectedSubcategory || 'none'}"`);
-      const videosData = await fetchVideos(categorySlug, selectedSubcategory || undefined);
-      console.log(`CategoryPage: Fetched ${videosData.length} videos`);
-      setVideos(videosData);
+      console.log(`CategoryPage: Fetching projects for category "${categorySlug}" and subcategory "${selectedSubcategory || 'none'}"`);
+      const projectsData = await fetchVideos(categorySlug, selectedSubcategory || undefined);
+      console.log(`CategoryPage: Fetched ${projectsData.length} projects`);
+      setProjects(projectsData);
       
       // Build subcategory options from the category data
       const subcategoryOptions: SubcategoryOption[] = [
-        { label: 'All Videos', value: null }
+        { label: 'All Projects', value: null }
       ];
       
       if (categoryData.subcategories && categoryData.subcategories.length > 0) {
@@ -82,7 +82,7 @@ const CategoryPage = () => {
       // Show success toast
       toast({
         title: "Data loaded successfully",
-        description: `Loaded ${videosData.length} videos in ${categoryData.name}.`,
+        description: `Loaded ${projectsData.length} projects in ${categoryData.name}.`,
       });
     } catch (err) {
       console.error("CategoryPage: Error loading data", err);
@@ -163,7 +163,7 @@ const CategoryPage = () => {
               className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg text-sm"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              {subcategories.find(sub => sub.value === selectedSubcategory)?.label || 'All Videos'}
+              {subcategories.find(sub => sub.value === selectedSubcategory)?.label || 'All Projects'}
               <ChevronDown size={16} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
@@ -197,7 +197,7 @@ const CategoryPage = () => {
           }`}>
             {renderSkeletons()}
           </div>
-        ) : videos.length > 0 ? (
+        ) : projects.length > 0 ? (
           <div className={`grid gap-6 ${
             view === 'list' 
               ? 'grid-cols-1' 
@@ -205,13 +205,13 @@ const CategoryPage = () => {
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                 : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
           }`}>
-            {videos.map((video) => (
-              <VideoCard key={video.id} video={video} view={view} />
+            {projects.map((project) => (
+              <VideoCard key={project.id} video={project} view={view} />
             ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-muted/10 rounded-lg border border-border/40 animate-fade-in">
-            <p className="text-muted-foreground">No videos found in this category.</p>
+            <p className="text-muted-foreground">No projects found in this category.</p>
             <button 
               onClick={loadData} 
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90 transition-colors"
