@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Film, Folder, Home, Info, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Film, Folder, Home, Info, RefreshCw, Github } from 'lucide-react';
 import { fetchCategories, refreshRemoteData } from '@/services/videoApi';
 import { ExtendedCategory } from '@/types/video';
 import { toast } from 'sonner';
@@ -120,6 +121,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     loadCategories();
   }, []);
 
+  // GitHub repository information
+  const repoInfo = {
+    name: "video-resources-library",
+    owner: "open-source-community",
+    stars: 256,
+    url: "https://github.com/open-source-community/video-resources-library"
+  };
+
   return (
     <aside 
       className={`fixed top-0 left-0 z-40 h-screen bg-sidebar transition-all duration-300 ease-in-out overflow-hidden border-r border-sidebar-border
@@ -180,6 +189,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             </Link>
           </div>
         </nav>
+        
+        {/* GitHub Repository CTA */}
+        <div className="p-4 border-t border-sidebar-border">
+          <a 
+            href={repoInfo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-sm"
+          >
+            <Github size={16} />
+            <div>
+              <div className="font-medium">{repoInfo.owner}/{repoInfo.name}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <span>⭐ {repoInfo.stars}</span>
+                <span className="mx-1">•</span>
+                <span>Contribute</span>
+              </div>
+            </div>
+          </a>
+        </div>
         
         <div className="p-4 border-t border-sidebar-border text-xs text-muted-foreground text-center">
           &copy; {new Date().getFullYear()} Video Resources
