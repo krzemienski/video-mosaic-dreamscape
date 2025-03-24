@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --force",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "github": {
+    "silent": true
+  },
+  "env": {
+    "NODE_OPTIONS": "--max_old_space_size=4096"
+  },
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max_old_space_size=4096"
+    }
+  }
+}
