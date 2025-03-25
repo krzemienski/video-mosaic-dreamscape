@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layouts/MainLayout';
 import CategoryCard from '@/components/ui/CategoryCard';
@@ -8,6 +7,7 @@ import { Category } from '@/components/ui/CategoryCard';
 import { toast } from "@/components/ui/use-toast";
 import { Loader } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import MetaTags from '@/components/SEO/MetaTags';
 
 const Index = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -62,11 +62,6 @@ const Index = () => {
       setCategories(categoriesWithCount);
       console.log("Index: Categories set successfully");
 
-      // Show success toast
-      toast({
-        title: "Data loaded successfully",
-        description: `Loaded ${categoriesWithCount.length} categories.`,
-      });
     } catch (err) {
       console.error("Index: Error loading categories", err);
       setError("Failed to load categories. Please try again.");
@@ -118,6 +113,20 @@ const Index = () => {
 
   return (
     <MainLayout>
+      <MetaTags 
+        title="Awesome Video - Discover Curated Video Resources"
+        description="Explore a handpicked collection of the best video resources across categories like tutorials, entertainment, education, and more."
+        canonicalUrl="https://awesome.video/"
+        keywords={[
+          'video resources', 
+          'curated videos', 
+          'best video content', 
+          'video collection',
+          'video categories',
+          'awesome video'
+        ]}
+      />
+      
       <div className="max-w-7xl mx-auto">
         {isLoading && (
           <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">

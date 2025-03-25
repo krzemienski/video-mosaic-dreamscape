@@ -1,0 +1,26 @@
+{
+  "name": "Awesome Video",
+  "short_name": "AwesomeVideo",
+  "description": "Discover a curated collection of high-quality video resources",
+  "start_url": "https://awesome.video/",
+  "icons": [
+    {
+      "src": "/favicon/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#0B0D10",
+  "background_color": "#0B0D10",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en-US"
+}

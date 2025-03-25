@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -7,6 +6,7 @@ import { fetchCategory, fetchVideos } from '@/services/api';
 import { ExtendedCategory, VideoResource } from '@/types/video';
 import useViewState from '@/hooks/useViewState';
 import { toast } from "@/components/ui/use-toast";
+import MetaTags from '@/components/SEO/MetaTags';
 
 // Import our new components
 import CategoryHeader from '@/components/category/CategoryHeader';
@@ -79,12 +79,6 @@ const CategoryPage = () => {
       }
       
       setSubcategories(subcategoryOptions);
-      
-      // Show success toast
-      toast({
-        title: "Data loaded successfully",
-        description: `Loaded ${projectsData.length} projects in ${categoryData.name}.`,
-      });
     } catch (err) {
       console.error("CategoryPage: Error loading data", err);
       setError("Failed to load category data. Please try again.");
@@ -116,8 +110,38 @@ const CategoryPage = () => {
     );
   }
 
+  const getCurrentSubcategoryName = () => {
+    if (!selectedSubcategory) return null;
+    
+    const subcategory = subcategories.find(sub => sub.value === selectedSubcategory);
+    return subcategory ? subcategory.label.split(' (')[0] : null;
+  };
+
   return (
     <MainLayout>
+      {/* Dynamic SEO metadata based on category and subcategory */}
+      {category && (
+        <MetaTags 
+          title={getCurrentSubcategoryName() 
+            ? `${getCurrentSubcategoryName()} ${category.name} Videos`
+            : `${category.name} Videos`
+          }
+          description={category.description 
+            ? category.description
+            : `Explore the best ${category.name.toLowerCase()} videos curated for you. ${projects.length} high-quality resources available.`
+          }
+          canonicalUrl={`https://awesome.video/category/${categorySlug}${subcategorySlug ? `/${subcategorySlug}` : ''}`}
+          keywords={[
+            `${category.name.toLowerCase()} videos`,
+            `${category.name.toLowerCase()} resources`,
+            'video content',
+            getCurrentSubcategoryName()?.toLowerCase() || '',
+            'awesome video'
+          ].filter(Boolean)}
+          ogType="website"
+        />
+      )}
+      
       <div className="max-w-7xl mx-auto">
         <CategoryHeader category={category} isLoading={isLoading} />
         

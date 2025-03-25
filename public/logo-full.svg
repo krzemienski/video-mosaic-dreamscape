@@ -1,0 +1,11 @@
+
+<svg width="643" height="180" viewBox="0 0 643 180" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#0B0D10"/>
+  <line x1="60" y1="130" x2="100" y2="40" stroke="#FF2DA0" strokeWidth="6"/>
+  <line x1="100" y1="40" x2="140" y2="130" stroke="#FF2DA0" strokeWidth="6"/>
+  <line x1="70" y1="40" x2="100" y2="130" stroke="#00F0FF" strokeWidth="6"/>
+  <line x1="100" y1="130" x2="130" y2="40" stroke="#00F0FF" strokeWidth="6"/>
+  <line x1="80" y1="100" x2="120" y2="100" stroke="#00F0FF" strokeWidth="4"/>
+  <text x="180" y="105" fontFamily="Sora, sans-serif" fontSize="48" fontWeight="600" fill="#FF2DA0">AWESOME</text>
+  <text x="448" y="105" fontFamily="Sora, sans-serif" fontSize="48" fontWeight="600" fill="#00F0FF">VIDEO</text>
+</svg>

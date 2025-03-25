@@ -1,0 +1,13 @@
+{
+  "name": "favicon-generator",
+  "version": "1.0.0",
+  "description": "Generate favicon and meta images for Awesome Video",
+  "type": "module",
+  "main": "generate-favicons.js",
+  "scripts": {
+    "generate": "node generate-favicons.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.2"
+  }
+}
