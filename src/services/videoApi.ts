@@ -1,12 +1,9 @@
-
 import { ExtendedCategory, VideoResource } from '@/types/video';
 import { transformAwesomeVideoData, fetchContentWithCorsHandling } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
 
-// Primary URL to fetch the recategorized content
-const CONTENTS_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/recategorized_projects_anthropic_claude_3_5_haiku_20241022_1743170712_1181.json';
-// Fallback URL in case the primary fails
-const FALLBACK_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/contents.json';
+// Get content URL from environment variables
+const CONTENTS_URL = import.meta.env.VITE_CONTENT_URL || 'https://hack-ski.s3.us-east-1.amazonaws.com/av/recategorized_projects_anthropic_claude_3_5_haiku_20241022_1743170712_1181.json';
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   console.log('fetchCategories: Checking cache first');
@@ -187,18 +184,9 @@ export const refreshRemoteData = async (): Promise<ExtendedCategory[]> => {
   console.log('refreshRemoteData: Forcing refresh from remote source');
 
   try {
-    console.log(`refreshRemoteData: Trying primary URL first: ${CONTENTS_URL}`);
-    let contents;
-    
-    try {
-      contents = await fetchContentWithCorsHandling(CONTENTS_URL);
-      console.log('refreshRemoteData: Successfully retrieved data from primary URL');
-    } catch (primaryError) {
-      console.error('refreshRemoteData: Primary URL failed, trying fallback:', primaryError);
-      console.log(`refreshRemoteData: Fetching from fallback URL: ${FALLBACK_URL}`);
-      contents = await fetchContentWithCorsHandling(FALLBACK_URL);
-      console.log('refreshRemoteData: Successfully retrieved data from fallback URL');
-    }
+    console.log(`refreshRemoteData: Fetching from URL: ${CONTENTS_URL}`);
+    const contents = await fetchContentWithCorsHandling(CONTENTS_URL);
+    console.log('refreshRemoteData: Successfully retrieved data');
 
     const transformedData = transformAwesomeVideoData(contents);
 

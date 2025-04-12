@@ -1,7 +1,12 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, BookOpen, Code, FileText, Package, Archive, Radio, Film, Library, Video, Monitor, Server, Cloud, Database, Tv, Cpu, Layers, Settings, Clock } from 'lucide-react';
+import { 
+  ChevronRight, BookOpen, Code, FileText, Package, Archive, Radio, 
+  Film, Library, Video, Monitor, Server, Cloud, Database, Tv, 
+  Cpu, Layers, Settings, Clock, Network, PlaySquare, Compass, 
+  Presentation, Cast, Codepen, Youtube, Twitch, Rss, Music, Zap,
+  Headphones, PenTool, Aperture, Camera, Mail, MessageCircle 
+} from 'lucide-react';
 
 export interface Category {
   id: string;
@@ -16,10 +21,11 @@ interface CategoryCardProps {
   category: Category;
 }
 
-// Map category names to appropriate icons - expanded to support more categories
+// Map category names to appropriate icons - expanded to support more categories from recategorized data
 const getCategoryIcon = (categoryName: string) => {
   const name = categoryName.toLowerCase();
   
+  // Media/Video specific categories
   if (name.includes('codec') || name.includes('compression')) {
     return <Archive size={48} className="text-primary/70" />;
   } else if (name.includes('encoding') || name.includes('transcoding')) {
@@ -27,31 +33,79 @@ const getCategoryIcon = (categoryName: string) => {
   } else if (name.includes('stream') || name.includes('broadcast') || name.includes('rtmp')) {
     return <Radio size={48} className="text-primary/70" />;
   } else if (name.includes('player') || name.includes('playback')) {
-    return <Film size={48} className="text-primary/70" />;
-  } else if (name.includes('docs') || name.includes('resources') || name.includes('guide')) {
-    return <BookOpen size={48} className="text-primary/70" />;
-  } else if (name.includes('tool') || name.includes('software')) {
-    return <Package size={48} className="text-primary/70" />;
+    return <PlaySquare size={48} className="text-primary/70" />;
   } else if (name.includes('video')) {
     return <Video size={48} className="text-primary/70" />;
-  } else if (name.includes('web')) {
+  } else if (name.includes('movie') || name.includes('film')) {
+    return <Film size={48} className="text-primary/70" />;
+  } else if (name.includes('tv') || name.includes('television')) {
+    return <Tv size={48} className="text-primary/70" />;
+  } else if (name.includes('presentation')) {
+    return <Presentation size={48} className="text-primary/70" />;
+  } else if (name.includes('cast') || name.includes('streaming service')) {
+    return <Cast size={48} className="text-primary/70" />;
+  } else if (name.includes('youtube')) {
+    return <Youtube size={48} className="text-primary/70" />;
+  } else if (name.includes('twitch')) {
+    return <Twitch size={48} className="text-primary/70" />;
+  } else if (name.includes('podcast') || name.includes('rss')) {
+    return <Rss size={48} className="text-primary/70" />;
+  } else if (name.includes('audio') || name.includes('sound')) {
+    return <Music size={48} className="text-primary/70" />;
+  } else if (name.includes('headphone') || name.includes('listening')) {
+    return <Headphones size={48} className="text-primary/70" />;
+  }
+  
+  // Documentation and resources 
+  else if (name.includes('docs') || name.includes('resources') || name.includes('guide')) {
+    return <BookOpen size={48} className="text-primary/70" />;
+  } else if (name.includes('reference') || name.includes('specifications')) {
+    return <FileText size={48} className="text-primary/70" />;
+  }
+  
+  // Tools and software 
+  else if (name.includes('tool') || name.includes('software') || name.includes('app')) {
+    return <Package size={48} className="text-primary/70" />;
+  } else if (name.includes('editor') || name.includes('editing')) {
+    return <PenTool size={48} className="text-primary/70" />;
+  } else if (name.includes('camera') || name.includes('capture')) {
+    return <Camera size={48} className="text-primary/70" />;
+  } else if (name.includes('api') || name.includes('sdk')) {
+    return <Zap size={48} className="text-primary/70" />;
+  }
+  
+  // Technology infrastructure
+  else if (name.includes('web')) {
     return <Monitor size={48} className="text-primary/70" />;
   } else if (name.includes('server')) {
     return <Server size={48} className="text-primary/70" />;
   } else if (name.includes('cloud') || name.includes('saas')) {
     return <Cloud size={48} className="text-primary/70" />;
+  } else if (name.includes('network') || name.includes('streaming platform')) {
+    return <Network size={48} className="text-primary/70" />;
   } else if (name.includes('database') || name.includes('storage')) {
     return <Database size={48} className="text-primary/70" />;
-  } else if (name.includes('tv') || name.includes('television')) {
-    return <Tv size={48} className="text-primary/70" />;
   } else if (name.includes('embedded') || name.includes('hardware')) {
     return <Cpu size={48} className="text-primary/70" />;
-  } else if (name.includes('layer') || name.includes('format') || name.includes('protocol')) {
+  } 
+  
+  // Other categories
+  else if (name.includes('layer') || name.includes('format') || name.includes('protocol')) {
     return <Layers size={48} className="text-primary/70" />;
   } else if (name.includes('configuration') || name.includes('setup')) {
     return <Settings size={48} className="text-primary/70" />;
   } else if (name.includes('latency') || name.includes('performance')) {
     return <Clock size={48} className="text-primary/70" />;
+  } else if (name.includes('community') || name.includes('social')) {
+    return <MessageCircle size={48} className="text-primary/70" />;
+  } else if (name.includes('analytics') || name.includes('measurement')) {
+    return <Compass size={48} className="text-primary/70" />;
+  } else if (name.includes('codecs') || name.includes('processing')) {
+    return <Codepen size={48} className="text-primary/70" />;
+  } else if (name.includes('photography') || name.includes('image')) {
+    return <Aperture size={48} className="text-primary/70" />;
+  } else if (name.includes('newsletter') || name.includes('email')) {
+    return <Mail size={48} className="text-primary/70" />;
   } else {
     return <Library size={48} className="text-primary/70" />;
   }
