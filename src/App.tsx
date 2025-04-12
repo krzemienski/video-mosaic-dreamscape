@@ -39,6 +39,7 @@ const App = () => {
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/category/:categorySlug" element={<CategoryPage />} />
                 <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
+                <Route path="/category/:categorySlug/*" element={<CategoryPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

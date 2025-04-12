@@ -1,4 +1,3 @@
-
 import { Category } from '@/components/ui/CategoryCard';
 
 // Extend the Category interface to include missing properties
@@ -6,6 +5,9 @@ export interface ExtendedCategory extends Category {
   imageUrl: string;
   videos?: VideoItem[];
   subcategories?: Subcategory[];
+  count?: number;
+  videoCount?: number;
+  subcategoryCount?: number;
 }
 
 export interface VideoItem {
@@ -22,6 +24,8 @@ export interface Subcategory {
   slug: string;
   description?: string;
   videos?: VideoItem[];
+  count?: number;
+  subcategories?: Subcategory[];
 }
 
 export interface VideoResource {

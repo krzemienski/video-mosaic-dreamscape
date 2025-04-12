@@ -14,6 +14,8 @@ interface CategoryItem {
 
 interface AccordionItemProps {
   category: CategoryItem;
+  level?: number;
+  parentSlug?: string;
 }
 
 interface GithubRepoInfo {
@@ -26,11 +28,16 @@ interface GithubRepoInfo {
 }
 
 const AccordionItem: React.FC<AccordionItemProps> = ({
-  category
+  category,
+  level = 0,
+  parentSlug = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  return <div className="border-b border-sidebar-border">
+  // Create the correct path for nested subcategories
+  const categoryPath = parentSlug ? `${parentSlug}/${category.slug}` : category.slug;
+
+  return <div className={`border-b border-sidebar-border ${level > 0 ? 'pl-3' : ''}`}>
       <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-sidebar-accent transition-colors duration-200" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex items-center gap-2">
           <Folder size={18} className="text-muted-foreground" />
@@ -40,12 +47,29 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
           {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </button>
       </div>
-      
+
       {isOpen && category.subcategories && category.subcategories.length > 0 && <div className="pl-6 bg-sidebar-accent/30 animate-accordion-down">
-          {category.subcategories.map(subcategory => <Link key={subcategory.slug} to={`/category/${category.slug}/${subcategory.slug}`} className="flex items-center gap-2 p-3 hover:bg-sidebar-accent transition-colors duration-200">
-              <Film size={16} className="text-muted-foreground" />
-              <span className="text-sm">{subcategory.name}</span>
-            </Link>)}
+          {category.subcategories.map(subcategory => {
+            // If this subcategory has nested subcategories, render it recursively
+            if (subcategory.subcategories && subcategory.subcategories.length > 0) {
+              return <AccordionItem
+                key={subcategory.slug}
+                category={subcategory}
+                level={level + 1}
+                parentSlug={categoryPath}
+              />;
+            } else {
+              // Render leaf subcategory as a link
+              return <Link
+                key={subcategory.slug}
+                to={`/category/${categoryPath}/${subcategory.slug}`}
+                className="flex items-center gap-2 p-3 hover:bg-sidebar-accent transition-colors duration-200"
+              >
+                <Film size={16} className="text-muted-foreground" />
+                <span className="text-sm">{subcategory.name}</span>
+              </Link>;
+            }
+          })}
         </div>}
     </div>;
 };
@@ -124,12 +148,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-sm text-muted-foreground font-mono tracking-wide">
             From FFMPEG to playback, streaming video.
           </p>
-          
+
           {errorMessage && <div className="mt-2 text-xs text-amber-500 bg-amber-950/30 p-2 rounded-md font-mono">
               {errorMessage}
             </div>}
         </div>
-        
+
         <nav className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="py-2">
             <Link to="/" className="flex items-center gap-2 px-4 py-3 hover:bg-sidebar-accent transition-colors duration-200" onClick={() => window.gtag?.('event', 'navigation', {
@@ -138,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Home size={18} className="text-brand-cyan" />
               <span className="font-mono tracking-wide">Home</span>
             </Link>
-            
+
             <div className="mt-2 mb-2">
               <div className="px-4 py-2 text-xs text-muted-foreground flex items-center font-mono tracking-wider">
                 CATEGORIES {isLoading ? <span className="ml-2 inline-flex items-center">
@@ -146,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     Loading...
                   </span> : `(${categories.length})`}
               </div>
-              
+
               {isLoading ? <div className="px-4 py-3 text-sm text-muted-foreground flex items-center">
                   <Loader size={16} className="animate-spin mr-2" />
                   Loading categories...
@@ -154,9 +178,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
         </nav>
-        
+
         <div className="p-4 border-t border-sidebar-border">
-          <a 
+          <a
             href={repoInfo.url}
             target="_blank"
             rel="noopener noreferrer"
