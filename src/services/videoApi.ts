@@ -3,8 +3,8 @@ import { ExtendedCategory, VideoResource } from '@/types/video';
 import { transformAwesomeVideoData, fetchContentWithCorsHandling } from './dataTransformer';
 import { getCachedData, updateCache } from './cacheService';
 
-// Primary URL to fetch the contents.json from CloudFront
-const CONTENTS_URL = 'https://d2l6iuu30u6bxw.cloudfront.net/contents.json';
+// Primary URL to fetch the recategorized content
+const CONTENTS_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/recategorized_projects_anthropic_claude_3_5_haiku_20241022_1743170712_1181.json';
 // Fallback URL in case the primary fails
 const FALLBACK_URL = 'https://hack-ski.s3.us-east-1.amazonaws.com/av/contents.json';
 

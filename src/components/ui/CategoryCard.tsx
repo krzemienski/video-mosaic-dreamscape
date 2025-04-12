@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, BookOpen, Code, FileText, Package, Archive, Radio, Film, Library } from 'lucide-react';
+import { ChevronRight, BookOpen, Code, FileText, Package, Archive, Radio, Film, Library, Video, Monitor, Server, Cloud, Database, Tv, Cpu, Layers, Settings, Clock } from 'lucide-react';
 
 export interface Category {
   id: string;
@@ -16,7 +16,7 @@ interface CategoryCardProps {
   category: Category;
 }
 
-// Map category names to appropriate icons
+// Map category names to appropriate icons - expanded to support more categories
 const getCategoryIcon = (categoryName: string) => {
   const name = categoryName.toLowerCase();
   
@@ -24,14 +24,34 @@ const getCategoryIcon = (categoryName: string) => {
     return <Archive size={48} className="text-primary/70" />;
   } else if (name.includes('encoding') || name.includes('transcoding')) {
     return <Code size={48} className="text-primary/70" />;
-  } else if (name.includes('stream') || name.includes('broadcast')) {
+  } else if (name.includes('stream') || name.includes('broadcast') || name.includes('rtmp')) {
     return <Radio size={48} className="text-primary/70" />;
   } else if (name.includes('player') || name.includes('playback')) {
     return <Film size={48} className="text-primary/70" />;
-  } else if (name.includes('docs') || name.includes('resources')) {
+  } else if (name.includes('docs') || name.includes('resources') || name.includes('guide')) {
     return <BookOpen size={48} className="text-primary/70" />;
   } else if (name.includes('tool') || name.includes('software')) {
     return <Package size={48} className="text-primary/70" />;
+  } else if (name.includes('video')) {
+    return <Video size={48} className="text-primary/70" />;
+  } else if (name.includes('web')) {
+    return <Monitor size={48} className="text-primary/70" />;
+  } else if (name.includes('server')) {
+    return <Server size={48} className="text-primary/70" />;
+  } else if (name.includes('cloud') || name.includes('saas')) {
+    return <Cloud size={48} className="text-primary/70" />;
+  } else if (name.includes('database') || name.includes('storage')) {
+    return <Database size={48} className="text-primary/70" />;
+  } else if (name.includes('tv') || name.includes('television')) {
+    return <Tv size={48} className="text-primary/70" />;
+  } else if (name.includes('embedded') || name.includes('hardware')) {
+    return <Cpu size={48} className="text-primary/70" />;
+  } else if (name.includes('layer') || name.includes('format') || name.includes('protocol')) {
+    return <Layers size={48} className="text-primary/70" />;
+  } else if (name.includes('configuration') || name.includes('setup')) {
+    return <Settings size={48} className="text-primary/70" />;
+  } else if (name.includes('latency') || name.includes('performance')) {
+    return <Clock size={48} className="text-primary/70" />;
   } else {
     return <Library size={48} className="text-primary/70" />;
   }
