@@ -16,6 +16,10 @@ export interface VideoItem {
   url: string;
   description: string;
   tags?: string[];
+  category?: string;
+  categories?: string[];
+  subcategory?: string;
+  subcategories?: string[];
 }
 
 export interface Subcategory {

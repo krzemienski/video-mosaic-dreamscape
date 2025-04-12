@@ -10,6 +10,10 @@ interface CategoryItem {
   name: string;
   slug: string;
   subcategories?: CategoryItem[];
+  description?: string;
+  count?: number;
+  videoCount?: number;
+  subcategoryCount?: number;
 }
 
 interface AccordionItemProps {
@@ -32,24 +36,80 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   level = 0,
   parentSlug = ''
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(level === 0); // Auto-expand top-level categories
 
   // Create the correct path for nested subcategories
   const categoryPath = parentSlug ? `${parentSlug}/${category.slug}` : category.slug;
 
-  return <div className={`border-b border-sidebar-border ${level > 0 ? 'pl-3' : ''}`}>
-      <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-sidebar-accent transition-colors duration-200" onClick={() => setIsOpen(!isOpen)}>
+  // Determine if this is a category with subcategories or a leaf category
+  const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+
+  // If it's a leaf category (no subcategories), make it a link directly to the category
+  if (!hasSubcategories) {
+    return (
+      <Link
+        to={`/category/${categoryPath}`}
+        className={`block border-b border-sidebar-border ${level > 0 ? 'pl-3' : ''}`}
+      >
+        <div className="flex items-center justify-between p-4 hover:bg-sidebar-accent transition-colors duration-200">
+          <div className="flex items-center gap-2">
+            <Film size={18} className="text-muted-foreground" />
+            <div className="flex flex-col">
+              <span>{category.name}</span>
+              {category.count !== undefined && (
+                <span className="text-xs text-muted-foreground">
+                  {category.count} resources
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  // Otherwise it's a category with subcategories, render with expand/collapse
+  return (
+    <div className={`border-b border-sidebar-border ${level > 0 ? 'pl-3' : ''}`}>
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-sidebar-accent transition-colors duration-200"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className="flex items-center gap-2">
           <Folder size={18} className="text-muted-foreground" />
-          <span>{category.name}</span>
+          <div className="flex flex-col">
+            <span>{category.name}</span>
+            {category.count !== undefined && (
+              <span className="text-xs text-muted-foreground">
+                {category.count} total resources
+                {category.videoCount !== undefined && category.videoCount > 0 && ` (${category.videoCount} direct)`}
+              </span>
+            )}
+          </div>
         </div>
         <button className="text-muted-foreground">
           {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
         </button>
       </div>
 
-      {isOpen && category.subcategories && category.subcategories.length > 0 && <div className="pl-6 bg-sidebar-accent/30 animate-accordion-down">
-          {category.subcategories.map(subcategory => {
+      {isOpen && (
+        <div className="pl-4 bg-sidebar-accent/30 animate-accordion-down">
+          {/* Render a link to this category itself if it has direct videos */}
+          {category.videoCount && category.videoCount > 0 && (
+            <Link
+              to={`/category/${categoryPath}`}
+              className="flex items-center gap-2 p-3 hover:bg-sidebar-accent transition-colors duration-200 border-l-2 border-brand-cyan/20"
+            >
+              <Film size={16} className="text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-sm">Main resources</span>
+                <span className="text-xs text-muted-foreground">{category.videoCount} items</span>
+              </div>
+            </Link>
+          )}
+
+          {/* Render subcategories */}
+          {category.subcategories && category.subcategories.map(subcategory => {
             // If this subcategory has nested subcategories, render it recursively
             if (subcategory.subcategories && subcategory.subcategories.length > 0) {
               return <AccordionItem
@@ -66,12 +126,19 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
                 className="flex items-center gap-2 p-3 hover:bg-sidebar-accent transition-colors duration-200"
               >
                 <Film size={16} className="text-muted-foreground" />
-                <span className="text-sm">{subcategory.name}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm">{subcategory.name}</span>
+                  {subcategory.count !== undefined && (
+                    <span className="text-xs text-muted-foreground">{subcategory.count} items</span>
+                  )}
+                </div>
               </Link>;
             }
           })}
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 };
 
 interface SidebarProps {
@@ -98,13 +165,33 @@ const Sidebar: React.FC<SidebarProps> = ({
       console.log('Sidebar: Fetching categories...');
       const data = await fetchCategories();
       console.log('Sidebar: Loaded categories count:', data.length);
+
+      // Log detailed category information for debugging
       if (data.length > 0) {
-        console.log('Sidebar: First few categories:', data.slice(0, 3).map(c => c.name).join(', '));
+        console.log('Sidebar: Categories with counts:');
+        data.forEach(category => {
+          console.log(`  ${category.name}: ${category.count || 0} total (direct: ${category.videoCount || 0}, in subcategories: ${category.subcategoryCount || 0})`);
+
+          if (category.subcategories && category.subcategories.length > 0) {
+            console.log(`    Subcategories (${category.subcategories.length}):`);
+            category.subcategories.forEach(subcat => {
+              console.log(`      ${subcat.name}: ${subcat.count || 0} items`);
+
+              if (subcat.subcategories && subcat.subcategories.length > 0) {
+                console.log(`        Nested subcategories (${subcat.subcategories.length}):`);
+                subcat.subcategories.forEach(nested => {
+                  console.log(`          ${nested.name}: ${nested.count || 0} items`);
+                });
+              }
+            });
+          }
+        });
       }
+
       setCategories(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading categories for sidebar:', error);
-      if (error.message && error.message.includes('CORS')) {
+      if (error instanceof Error && error.message.includes('CORS')) {
         setErrorMessage('We\'re having trouble accessing the resources due to CORS restrictions. Please try refreshing or come back later.');
         toast.error('CORS issue detected. Unable to load content.');
       } else {

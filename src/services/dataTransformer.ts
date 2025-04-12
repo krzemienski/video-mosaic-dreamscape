@@ -1,7 +1,28 @@
-import { ExtendedCategory, VideoItem } from '@/types/video';
+import { ExtendedCategory, VideoItem, AwesomeVideoContents, AwesomeVideoCategory } from '@/types/video';
+
+interface RawCategory {
+  id: string;
+  title: string;
+  description?: string;
+  parent?: string;
+  subcategories?: RawCategory[];
+  videos?: VideoItem[];
+}
+
+interface CategoryMapItem extends RawCategory {
+  subcategories: RawCategory[];
+  videos: VideoItem[];
+}
+
+interface RawContents extends AwesomeVideoContents {
+  model_used?: string;
+  provider?: string;
+  project_count?: number;
+  projects: VideoItem[];
+}
 
 // Function to convert awesome-video data to our ExtendedCategory format
-export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => {
+export const transformAwesomeVideoData = (contents: RawContents): ExtendedCategory[] => {
   console.log('Starting data transformation');
 
   if (!contents) {
@@ -21,16 +42,53 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
     console.log(`Total project count: ${contents.project_count}`);
   }
 
+  // Log some statistics about projects to understand the data better
+  if (contents.projects && Array.isArray(contents.projects)) {
+    console.log(`Total projects in data: ${contents.projects.length}`);
+
+    // Count how many projects have specific category/subcategory fields
+    const projectsWithCategory = contents.projects.filter(p => p.category).length;
+    const projectsWithSubcategory = contents.projects.filter(p => p.subcategory).length;
+    const projectsWithCategoriesArray = contents.projects.filter(p => Array.isArray(p.categories)).length;
+    const projectsWithSubcategoriesArray = contents.projects.filter(p => Array.isArray(p.subcategories)).length;
+
+    console.log(`Projects with direct category: ${projectsWithCategory}`);
+    console.log(`Projects with direct subcategory: ${projectsWithSubcategory}`);
+    console.log(`Projects with categories array: ${projectsWithCategoriesArray}`);
+    console.log(`Projects with subcategories array: ${projectsWithSubcategoriesArray}`);
+  }
+
   // Handle the recategorized structure from awesome-video repository
   if (contents.categories && Array.isArray(contents.categories)) {
     console.log(`Processing ${contents.categories.length} categories in contents`);
 
+    // First, create a map of all categories by ID for easy lookup
+    const categoryMap = new Map<string, CategoryMapItem>();
+    contents.categories.forEach((category: RawCategory) => {
+      categoryMap.set(category.id, {
+        ...category,
+        subcategories: [],
+        videos: []
+      });
+    });
+
+    // Now build the hierarchy by connecting parents and children
+    contents.categories.forEach((category: RawCategory) => {
+      if (category.parent) {
+        const parentCategory = categoryMap.get(category.parent);
+        if (parentCategory) {
+          parentCategory.subcategories.push(categoryMap.get(category.id) as RawCategory);
+        }
+      }
+    });
+
     // Map top-level categories first (those without parent)
-    const topLevelCategories = contents.categories.filter(category => !category.parent);
+    const topLevelCategories = contents.categories.filter((category: RawCategory) => !category.parent);
     console.log(`Found ${topLevelCategories.length} top-level categories`);
 
-    return topLevelCategories.map((category, index) => {
-      return processCategoryWithProjects(category, index, contents);
+    // Process each top-level category and its subcategories
+    return topLevelCategories.map((category: RawCategory, index: number) => {
+      return processCategoryWithProjects(category, index, contents, categoryMap);
     });
   } else {
     console.error('Invalid or missing categories array in contents');
@@ -38,79 +96,138 @@ export const transformAwesomeVideoData = (contents: any): ExtendedCategory[] => 
   }
 };
 
+// Get all projects for a specific category ID
+const getProjectsForCategory = (categoryId: string, projects: VideoItem[]): VideoItem[] => {
+  if (!categoryId || !projects || projects.length === 0) {
+    return [];
+  }
+
+  // Log the category ID we're searching for
+  console.log(`Looking for projects with category ID: ${categoryId}`);
+
+  // Get a sample of the first project to see its structure
+  if (projects.length > 0) {
+    const sampleProject = projects[0];
+    console.log('Sample project structure:', {
+      id: sampleProject.id,
+      title: sampleProject.title,
+      category: sampleProject.category,
+      categories: sampleProject.categories,
+      subcategory: sampleProject.subcategory,
+      subcategories: sampleProject.subcategories
+    });
+  }
+
+  return projects.filter((project: VideoItem) => {
+    // Direct category match
+    if (project.category === categoryId) {
+      return true;
+    }
+
+    // Check in categories array if it exists
+    if (Array.isArray(project.categories) && project.categories.includes(categoryId)) {
+      return true;
+    }
+
+    // Direct subcategory match
+    if (project.subcategory === categoryId) {
+      return true;
+    }
+
+    // Check in subcategories array if it exists
+    if (Array.isArray(project.subcategories) && project.subcategories.includes(categoryId)) {
+      return true;
+    }
+
+    return false;
+  });
+};
+
 // Process a category and its associated projects
-const processCategoryWithProjects = (category: any, index: number, contents: any): ExtendedCategory => {
+const processCategoryWithProjects = (
+  category: RawCategory,
+  index: number,
+  contents: RawContents,
+  categoryMap: Map<string, CategoryMapItem>
+): ExtendedCategory => {
   const categoryId = category.id || '';
   const categoryName = category.title || '';
   const categoryDescription = category.description || `Resources related to ${categoryName}`;
   const slug = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-  console.log(`Processing category ${index}: ${categoryName}`);
+  console.log(`Processing category ${index}: ${categoryName} (ID: ${categoryId})`);
 
-  // Find all subcategories for this category
-  const subcategories = contents.categories
-    .filter((subcat: any) => subcat.parent === categoryId)
-    .map((subcat: any, subIndex: number) => {
-      const subcatName = subcat.title || '';
-      const subcatDescription = subcat.description || `Resources related to ${subcatName}`;
-      const subcatSlug = subcatName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-      // Find all projects belonging to this subcategory
-      const subcatProjects = getProjectsForCategory(subcat.id, contents.projects);
-      console.log(`Subcategory "${subcatName}" has ${subcatProjects.length} projects`);
-
-      // Find nested subcategories (sub-subcategories)
-      const nestedSubcategories = contents.categories
-        .filter((nested: any) => nested.parent === subcat.id)
-        .map((nested: any, nestedIndex: number) => {
-          const nestedName = nested.title || '';
-          const nestedDescription = nested.description || `Resources related to ${nestedName}`;
-          const nestedSlug = nestedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-          // Find all projects belonging to this nested subcategory
-          const nestedProjects = getProjectsForCategory(nested.id, contents.projects);
-          console.log(`Nested subcategory "${nestedName}" has ${nestedProjects.length} projects`);
-
-          return {
-            id: `${index}-sub-${subIndex}-nested-${nestedIndex}`,
-            name: nestedName,
-            slug: nestedSlug,
-            description: nestedDescription,
-            count: nestedProjects.length,
-            videos: nestedProjects.map((project: any, projectIndex: number) =>
-              mapProjectToVideoItem(project, index, `${subIndex}-${nestedIndex}`, projectIndex)
-            ),
-          };
-        });
-
-      return {
-        id: `${index}-sub-${subIndex}`,
-        name: subcatName,
-        slug: subcatSlug,
-        description: subcatDescription,
-        count: subcatProjects.length +
-          nestedSubcategories.reduce((sum, nested) => sum + (nested.count || 0), 0),
-        videos: subcatProjects.map((project: any, projectIndex: number) =>
-          mapProjectToVideoItem(project, index, subIndex, projectIndex)
-        ),
-        subcategories: nestedSubcategories.length > 0 ? nestedSubcategories : undefined,
-      };
-    });
+  // Get the category from our map which includes subcategories
+  const mappedCategory = categoryMap.get(categoryId);
+  if (!mappedCategory) {
+    throw new Error(`Category ${categoryId} not found in map`);
+  }
 
   // Find all projects belonging directly to this category
   const categoryProjects = getProjectsForCategory(categoryId, contents.projects);
   console.log(`Category "${categoryName}" has ${categoryProjects.length} direct projects`);
 
+  const subcategories = mappedCategory.subcategories.map((subcat: RawCategory, subIndex: number) => {
+    const subcatName = subcat.title || '';
+    const subcatId = subcat.id || '';
+    const subcatDescription = subcat.description || `Resources related to ${subcatName}`;
+    const subcatSlug = subcatName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    console.log(`Processing subcategory ${subcatName} (ID: ${subcatId}) of ${categoryName}`);
+
+    // Find all projects belonging to this subcategory
+    const subcatProjects = getProjectsForCategory(subcatId, contents.projects);
+    console.log(`Subcategory "${subcatName}" has ${subcatProjects.length} direct projects`);
+
+    // Process nested subcategories recursively
+    const nestedSubcategories = (subcat.subcategories || []).map((nested: RawCategory, nestedIndex: number) => {
+      const nestedName = nested.title || '';
+      const nestedId = nested.id || '';
+      const nestedDescription = nested.description || `Resources related to ${nestedName}`;
+      const nestedSlug = nestedName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+      console.log(`Processing nested subcategory ${nestedName} (ID: ${nestedId}) of ${subcatName}`);
+
+      // Find all projects belonging to this nested subcategory
+      const nestedProjects = getProjectsForCategory(nestedId, contents.projects);
+      console.log(`Nested subcategory "${nestedName}" has ${nestedProjects.length} projects`);
+
+      return {
+        id: `${index}-sub-${subIndex}-nested-${nestedIndex}`,
+        name: nestedName,
+        slug: nestedSlug,
+        description: nestedDescription,
+        count: nestedProjects.length,
+        videos: nestedProjects.map((project: VideoItem, projectIndex: number) =>
+          mapProjectToVideoItem(project, index, subIndex, projectIndex)
+        ),
+      };
+    });
+
+    // Calculate total count for this subcategory (direct + nested)
+    const totalSubcatCount = subcatProjects.length +
+      nestedSubcategories.reduce((sum, nested) => sum + (nested.count || 0), 0);
+
+    console.log(`Subcategory "${subcatName}" total count: ${totalSubcatCount} (direct: ${subcatProjects.length}, nested: ${totalSubcatCount - subcatProjects.length})`);
+
+    return {
+      id: `${index}-sub-${subIndex}`,
+      name: subcatName,
+      slug: subcatSlug,
+      description: subcatDescription,
+      count: totalSubcatCount,
+      videos: subcatProjects.map((project: VideoItem, projectIndex: number) =>
+        mapProjectToVideoItem(project, index, subIndex, projectIndex)
+      ),
+      subcategories: nestedSubcategories.length > 0 ? nestedSubcategories : undefined,
+    };
+  });
+
   // Calculate total projects (direct + in subcategories and nested subcategories)
   const totalProjectCount = categoryProjects.length +
-    subcategories.reduce((sum, sub) => {
-      const subVideosCount = sub.videos?.length || 0;
-      const nestedCount = sub.subcategories?.reduce(
-        (nestedSum, nested) => nestedSum + (nested.videos?.length || 0),
-        0
-      ) || 0;
-      return sum + subVideosCount + nestedCount;
-    }, 0);
+    subcategories.reduce((sum, sub) => sum + (sub.count || 0), 0);
+
+  console.log(`Category "${categoryName}" total count: ${totalProjectCount} (direct: ${categoryProjects.length}, in subcategories: ${totalProjectCount - categoryProjects.length})`);
 
   return {
     id: `cat-${index}`,
@@ -119,41 +236,18 @@ const processCategoryWithProjects = (category: any, index: number, contents: any
     description: categoryDescription,
     imageUrl: `/images/category-${index % 6 + 1}.jpg`, // Cycle through 6 placeholder images
     count: totalProjectCount,
-    videoCount: categoryProjects.length,
+    videoCount: categoryProjects.length, // Direct videos only
     subcategoryCount: subcategories.length,
-    videos: categoryProjects.map((project: any, projectIndex: number) =>
+    videos: categoryProjects.map((project: VideoItem, projectIndex: number) =>
       mapProjectToVideoItem(project, index, null, projectIndex)
     ),
     subcategories,
   };
 };
 
-// Get all projects for a specific category ID
-const getProjectsForCategory = (categoryId: string, projects: any[]): any[] => {
-  if (!Array.isArray(projects)) {
-    console.log('Projects array is not valid:', projects);
-    return [];
-  }
-
-  return projects.filter(project => {
-    if (typeof project.category === 'string') {
-      return project.category === categoryId;
-    } else if (Array.isArray(project.category)) {
-      return project.category.includes(categoryId);
-    } else if (typeof project.subcategory === 'string' && project.subcategory === categoryId) {
-      // If a project has a subcategory field that matches our ID
-      return true;
-    } else if (Array.isArray(project.subcategory) && project.subcategory.includes(categoryId)) {
-      // If a project has a subcategory array that includes our ID
-      return true;
-    }
-    return false;
-  });
-};
-
 // Map a project to our VideoItem format
 const mapProjectToVideoItem = (
-  project: any,
+  project: VideoItem,
   categoryIndex: number,
   subcategoryIndex: number | null,
   projectIndex: number
@@ -162,28 +256,17 @@ const mapProjectToVideoItem = (
     ? `${categoryIndex}-${subcategoryIndex}-item-`
     : `${categoryIndex}-item-`;
 
-  // Ensure tags are properly extracted and processed
-  let tags: string[] = [];
-  if (project.tags) {
-    // Handle both string array and comma-separated string formats
-    if (Array.isArray(project.tags)) {
-      tags = project.tags;
-    } else if (typeof project.tags === 'string') {
-      tags = project.tags.split(',').map(tag => tag.trim());
-    }
-  }
-
   return {
     id: `${idPrefix}${projectIndex}`,
-    title: project.title || project.name || `Resource ${projectIndex}`,
-    url: project.homepage || project.url || '',
-    description: project.description || '',
-    tags: tags,
+    title: project.title,
+    url: project.url,
+    description: project.description,
+    tags: project.tags || [],
   };
 };
 
 // Helper function to fetch content using CORS proxy if needed
-export const fetchContentWithCorsHandling = async (url: string): Promise<any> => {
+export const fetchContentWithCorsHandling = async (url: string): Promise<RawContents> => {
   console.log(`Fetching content from URL: ${url}`);
 
   // Get the content URL from environment variables if available
@@ -263,7 +346,7 @@ export const fetchContentWithCorsHandling = async (url: string): Promise<any> =>
 };
 
 // Helper function for debugging - examine a URL's content structure
-export const examineUrlContent = async (url: string): Promise<any> => {
+export const examineUrlContent = async (url: string): Promise<RawContents> => {
   try {
     console.log(`Examining content from URL: ${url}`);
 
@@ -282,7 +365,7 @@ export const examineUrlContent = async (url: string): Promise<any> => {
     console.log(`Received ${text.length} bytes of data`);
 
     try {
-      const json = JSON.parse(text);
+      const json = JSON.parse(text) as RawContents;
       console.log('Content structure keys:', Object.keys(json).join(', '));
       return json;
     } catch (e) {
