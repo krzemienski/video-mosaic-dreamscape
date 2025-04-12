@@ -3,7 +3,7 @@ import { transformAwesomeVideoData, fetchContentWithCorsHandling } from './dataT
 import { getCachedData, updateCache } from './cacheService';
 
 // Get content URL from environment variables
-const CONTENTS_URL = import.meta.env.VITE_CONTENT_URL || 'https://hack-ski.s3.us-east-1.amazonaws.com/av/recategorized_projects_anthropic_claude_3_5_haiku_20241022_1743170712_1181.json';
+const CONTENTS_URL = import.meta.env.VITE_CONTENT_URL || 'https://hack-ski.s3.us-east-1.amazonaws.com/av/recategorized_with_researchers_2010_projects.json';
 
 export const fetchCategories = async (): Promise<ExtendedCategory[]> => {
   console.log('fetchCategories: Checking cache first');
