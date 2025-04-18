@@ -13,7 +13,7 @@ export interface ExtendedCategory extends Category {
 export interface VideoItem {
   id: string;
   title: string;
-  url: string;
+  url: string;										
   description: string;
   tags?: string[];
   category?: string;

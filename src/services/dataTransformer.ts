@@ -96,16 +96,12 @@ export const transformAwesomeVideoData = (contents: RawContents): ExtendedCatego
   }
 };
 
-// Get all projects for a specific category ID
+// Revised getProjectsForCategory: support singular/plural category and array properties
 const getProjectsForCategory = (categoryId: string, projects: VideoItem[]): VideoItem[] => {
   if (!categoryId || !projects || projects.length === 0) {
     return [];
   }
-
-  // Log the category ID we're searching for
   console.log(`Looking for projects with category ID: ${categoryId}`);
-
-  // Get a sample of the first project to see its structure
   if (projects.length > 0) {
     const sampleProject = projects[0];
     console.log('Sample project structure:', {
@@ -114,31 +110,17 @@ const getProjectsForCategory = (categoryId: string, projects: VideoItem[]): Vide
       category: sampleProject.category,
       categories: sampleProject.categories,
       subcategory: sampleProject.subcategory,
-      subcategories: sampleProject.subcategories
+      subcategories: sampleProject.subcategories,
+      homepage: (sampleProject as any).homepage,
     });
   }
-
-  return projects.filter((project: VideoItem) => {
-    // Direct category match
-    if (project.category === categoryId) {
-      return true;
-    }
-
-    // Check in categories array if it exists
-    if (Array.isArray(project.categories) && project.categories.includes(categoryId)) {
-      return true;
-    }
-
-    // Direct subcategory match
-    if (project.subcategory === categoryId) {
-      return true;
-    }
-
-    // Check in subcategories array if it exists
-    if (Array.isArray(project.subcategories) && project.subcategories.includes(categoryId)) {
-      return true;
-    }
-
+  return projects.filter((project: VideoItem & Record<string, any>) => {
+    if (project.category === categoryId) return true;
+    if (Array.isArray((project as any).category) && (project as any).category.includes(categoryId)) return true;
+    if (Array.isArray(project.categories) && project.categories.includes(categoryId)) return true;
+    if (project.subcategory === categoryId) return true;
+    if (Array.isArray((project as any).subcategory) && (project as any).subcategory.includes(categoryId)) return true;
+    if (Array.isArray(project.subcategories) && project.subcategories.includes(categoryId)) return true;
     return false;
   });
 };
@@ -245,7 +227,7 @@ const processCategoryWithProjects = (
   };
 };
 
-// Map a project to our VideoItem format
+// Updated mapProjectToVideoItem: use homepage as fallback for URL
 const mapProjectToVideoItem = (
   project: VideoItem,
   categoryIndex: number,
@@ -259,7 +241,7 @@ const mapProjectToVideoItem = (
   return {
     id: `${idPrefix}${projectIndex}`,
     title: project.title,
-    url: project.url,
+    url: project.url || (project as any).homepage || '',
     description: project.description,
     tags: project.tags || [],
   };
