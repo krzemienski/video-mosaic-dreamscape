@@ -249,8 +249,13 @@ export const searchVideos = async (query: string): Promise<VideoResource[]> => {
 
     console.log(`searchVideos: Collected ${allVideos.length} total videos to search through`);
 
-    // Normalize the query by removing special characters
-    const normalizedQuery = query.toLowerCase().replace(/[-_\s]/g, '');
+    // Improved normalization function - removes all non-alphanumeric characters and converts to lowercase
+    const normalizeString = (str: string): string => {
+      return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    };
+
+    // Normalize the query
+    const normalizedQuery = normalizeString(query);
 
     // Check if the query looks like a tag search (starts with # or tag:)
     const isTagSearch = query.startsWith('#') || query.toLowerCase().startsWith('tag:');
@@ -261,19 +266,41 @@ export const searchVideos = async (query: string): Promise<VideoResource[]> => {
       searchTerm = query.startsWith('#') ? query.substring(1) : query.substring(4);
       console.log(`searchVideos: Searching specifically for tag "${searchTerm}"`);
 
-      // Filter videos specifically by tag with fuzzy matching
+      // Filter videos specifically by tag with enhanced fuzzy matching
       const results = allVideos.filter(video =>
         video.tags &&
         video.tags.some(tag => {
-          const normalizedTag = tag.toLowerCase().replace(/[-_\s]/g, '');
-          return normalizedTag.includes(searchTerm.toLowerCase().replace(/[-_\s]/g, ''));
+          // Use the improved normalization for tag matching
+          const normalizedTag = normalizeString(tag);
+          const normalizedSearchTag = normalizeString(searchTerm);
+
+          // Check for direct substring match
+          if (normalizedTag.includes(normalizedSearchTag)) return true;
+
+          // If no direct match but high similarity (difference of just a few chars)
+          // For short terms, we want to be more exact
+          const lengthDiff = Math.abs(normalizedTag.length - normalizedSearchTag.length);
+          const minLength = Math.min(normalizedTag.length, normalizedSearchTag.length);
+
+          // For short tags, be more strict (exact or near-exact match)
+          if (minLength <= 5) {
+            return normalizedTag === normalizedSearchTag;
+          }
+
+          // For longer tags, we can be more flexible
+          if (lengthDiff <= 2 && (normalizedTag.includes(normalizedSearchTag) ||
+              normalizedSearchTag.includes(normalizedTag))) {
+            return true;
+          }
+
+          return false;
         })
       );
 
       console.log(`searchVideos: Found ${results.length} videos with tag matching "${searchTerm}"`);
       return results;
     } else {
-      // Regular search across all fields with fuzzy matching
+      // Regular search across all fields with enhanced fuzzy matching
       const results = allVideos.filter(video => {
         // Include all relevant fields in the search
         const searchableFields = [
@@ -283,16 +310,24 @@ export const searchVideos = async (query: string): Promise<VideoResource[]> => {
           video.subcategory || ''
         ];
 
-        // Add normalized tags for fuzzy matching
+        // Add tags for matching
         if (video.tags && video.tags.length > 0) {
-          const normalizedTags = video.tags.map(tag => tag.toLowerCase().replace(/[-_\s]/g, ''));
+          // Add both original and normalized tags
+          video.tags.forEach(tag => {
+            searchableFields.push(tag);
+          });
+
+          const normalizedTags = video.tags.map(tag => normalizeString(tag));
           searchableFields.push(normalizedTags.join(' '));
         }
 
-        // Create a normalized searchable text
-        const normalizedSearchableText = searchableFields.join(' ').toLowerCase().replace(/[-_\s]/g, '');
+        // Normalize all searchable fields
+        const normalizedSearchableText = searchableFields.join(' ').toLowerCase();
+        const strictNormalizedText = normalizeString(searchableFields.join(' '));
 
-        return normalizedSearchableText.includes(normalizedQuery);
+        // Check both regular lowercase matching and strict normalized matching
+        return normalizedSearchableText.includes(query.toLowerCase()) ||
+               strictNormalizedText.includes(normalizedQuery);
       });
 
       console.log(`searchVideos: Found ${results.length} videos matching query "${searchTerm}" (normalized: "${normalizedQuery}")`);

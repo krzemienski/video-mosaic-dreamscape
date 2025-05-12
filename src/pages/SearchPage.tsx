@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -16,14 +15,16 @@ const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [view, setView] = useViewState();
-  const { trackSearch } = useAnalytics();
-  
+  const { trackSearch, trackEvent, trackUIInteraction } = useAnalytics();
+
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastQuery = useRef<string>('');
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+  const searchStartTimeRef = useRef<number>(0);
+  const normalizedQueryRef = useRef<string>('');
+
   useEffect(() => {
     // Clear any pending search when unmounting
     return () => {
@@ -32,36 +33,85 @@ const SearchPage = () => {
       }
     };
   }, []);
-  
+
   useEffect(() => {
     // Skip search if query is too short or the same as last search
     if (!query || query.trim().length <= 1 || query === lastQuery.current) {
       return;
     }
-    
+
     // Add a slight delay to prevent rapid state updates
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       lastQuery.current = query;
-      
+      searchStartTimeRef.current = Date.now();
+      normalizedQueryRef.current = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+
       const fetchResults = async () => {
         try {
           setIsLoading(true);
           setError(null);
           console.log(`Executing search for query: "${query}"`);
-          
+
           const data = await searchVideos(query);
           setResults(data);
-          
-          // Track search query and results count with analytics
-          trackSearch(query, data.length);
-          console.log(`Search completed: found ${data.length} results for "${query}"`);
+
+          // Calculate search duration in milliseconds
+          const searchDuration = Date.now() - searchStartTimeRef.current;
+
+          // Track search query, results count, and performance with analytics
+          trackSearch(
+            query,
+            data.length,
+            'search_page'
+          );
+
+          // Track extended search analytics
+          trackEvent(
+            'search_completed',
+            'search',
+            query,
+            data.length,
+            {
+              normalized_term: normalizedQueryRef.current,
+              term_length: query.length,
+              search_duration_ms: searchDuration,
+              has_results: data.length > 0,
+              results_count: data.length
+            }
+          );
+
+          // Track zero results specifically
+          if (data.length === 0) {
+            trackEvent(
+              'search_zero_results',
+              'search',
+              query,
+              0,
+              {
+                normalized_term: normalizedQueryRef.current
+              }
+            );
+          }
+
+          console.log(`Search completed: found ${data.length} results for "${query}" in ${searchDuration}ms`);
         } catch (err) {
           setError("Failed to search resources. Please try again.");
           console.error('Search error:', err);
+
+          // Track search error
+          trackEvent(
+            'search_error',
+            'error',
+            query,
+            undefined,
+            {
+              error_message: err instanceof Error ? err.message : 'Unknown error'
+            }
+          );
         } finally {
           setIsLoading(false);
         }
@@ -69,8 +119,14 @@ const SearchPage = () => {
 
       fetchResults();
     }, 50); // Quicker response time for the search page
-    
-  }, [query, trackSearch]);
+
+  }, [query, trackSearch, trackEvent]);
+
+  // Handler for view toggle to track UI interaction
+  const handleViewChange = (newView: 'grid' | 'list' | 'masonry') => {
+    setView(newView);
+    trackUIInteraction('view_toggle', newView, 'search_results');
+  };
 
   const renderSkeletons = () => {
     return Array(6).fill(0).map((_, i) => (
@@ -98,8 +154,8 @@ const SearchPage = () => {
     }
 
     return (
-      <div className={`grid gap-6 ${view === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 
-        view === 'list' ? 'grid-cols-1' : 
+      <div className={`grid gap-6 ${view === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
+        view === 'list' ? 'grid-cols-1' :
         'columns-1 md:columns-2 lg:columns-3 space-y-6'}`}>
         {results.map((resource) => (
           <VideoCard key={resource.id} video={resource} view={view} />
@@ -124,7 +180,7 @@ const SearchPage = () => {
         </div>
 
         <div className="flex justify-end mb-6">
-          <ViewToggle view={view} onChange={setView} />
+          <ViewToggle view={view} onChange={handleViewChange} />
         </div>
 
         {error ? (

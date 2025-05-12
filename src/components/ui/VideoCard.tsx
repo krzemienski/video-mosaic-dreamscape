@@ -10,8 +10,8 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
-  const { trackResourceClick } = useAnalytics();
-  
+  const { trackResourceClick, trackTagClick } = useAnalytics();
+
   // Determine icon based on URL pattern
   const getResourceIcon = () => {
     const url = video.url.toLowerCase();
@@ -27,102 +27,109 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
       return <ExternalLink size={14} />;
     }
   };
-  
+
   // Track when user clicks on a resource with enhanced analytics
   const handleResourceClick = () => {
     trackResourceClick(
       video.title,
       video.url,
       video.category,
-      video.subcategory
+      video.subcategory,
+      video.tags
     );
   };
 
+  // Track when user clicks on a tag
+  const handleTagClick = (tag: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    trackTagClick(tag, `video_card_${video.id}`);
+  };
+
+  // Render tags if they exist
+  const renderTags = () => {
+    if (!video.tags || video.tags.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {video.tags.map((tag, index) => (
+          <span
+            key={`${tag}-${index}`}
+            className="text-xs bg-secondary/70 text-secondary-foreground px-2 py-0.5 rounded cursor-pointer hover:bg-secondary"
+            onClick={(e) => handleTagClick(tag, e)}
+          >
+            #{tag}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  // Render different card layouts based on view type
   if (view === 'list') {
     return (
-      <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-scale-in">
-        <div className="p-4 md:p-6 flex flex-col flex-1">
-          <h3 className="text-lg font-medium mb-2 text-balance">{video.title}</h3>
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{video.description}</p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground mt-auto">
-            {video.date && (
-              <div className="flex items-center gap-1">
-                <Calendar size={14} />
-                <span>{video.date}</span>
-              </div>
+      <a href={video.url} target="_blank" rel="noopener noreferrer" onClick={handleResourceClick} className="glass-card block p-4 hover:shadow-md transition-shadow duration-200 rounded-lg">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-1">
+            {getResourceIcon()}
+          </div>
+          <div className="flex-grow">
+            <h3 className="text-lg font-medium mb-1">{video.title}</h3>
+            {video.description && (
+              <p className="text-muted-foreground text-sm mb-2">{video.description}</p>
+            )}
+            <div className="flex flex-wrap items-center text-xs text-muted-foreground gap-x-3 gap-y-1">
+              {video.category && (
+                <span className="whitespace-nowrap">
+                  {video.category}{video.subcategory ? ` › ${video.subcategory}` : ''}
+                </span>
+              )}
+            </div>
+            {renderTags()}
+          </div>
+        </div>
+      </a>
+    );
+  } else if (view === 'masonry') {
+    return (
+      <a href={video.url} target="_blank" rel="noopener noreferrer" onClick={handleResourceClick} className="glass-card block p-4 mb-6 hover:shadow-md transition-shadow duration-200 rounded-lg break-inside-avoid">
+        <div className="flex flex-col">
+          <h3 className="text-lg font-medium mb-2">{video.title}</h3>
+          {video.description && (
+            <p className="text-muted-foreground text-sm mb-3">{video.description}</p>
+          )}
+          <div className="flex items-center text-xs text-muted-foreground gap-2 mt-auto">
+            {getResourceIcon()}
+            {video.category && (
+              <span>
+                {video.category}{video.subcategory ? ` › ${video.subcategory}` : ''}
+              </span>
             )}
           </div>
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-xs font-medium px-2 py-1 rounded-full bg-accent text-accent-foreground">
-              {video.subcategory || video.category}
-            </div>
-            <a 
-              href={video.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline transition-all"
-              onClick={handleResourceClick}
-            >
-              Explore {getResourceIcon()}
-            </a>
-          </div>
+          {renderTags()}
         </div>
-      </div>
+      </a>
     );
   }
 
-  // Masonry View (most compact, make this the default)
-  if (view === 'masonry' || view === 'grid') {
-    return (
-      <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 animate-scale-in">
-        <div className="p-3 flex flex-col h-full">
-          <h3 className="text-sm font-medium mb-1 line-clamp-2 text-balance">{video.title}</h3>
-          {video.description && (
-            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
-          )}
-          <div className="mt-auto flex items-center justify-between">
-            <div className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/70 text-accent-foreground">
-              {video.subcategory || video.category}
-            </div>
-            <a 
-              href={video.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
-              onClick={handleResourceClick}
-            >
-              Explore {getResourceIcon()}
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Grid View - This will now be more compact too, but we keep it for compatibility
+  // Default grid view
   return (
-    <div className="glass-card rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col animate-scale-in">
-      <div className="p-3 flex flex-col h-full">
-        <h3 className="text-sm font-medium mb-1 line-clamp-2 text-balance">{video.title}</h3>
+    <a href={video.url} target="_blank" rel="noopener noreferrer" onClick={handleResourceClick} className="glass-card block h-full p-4 hover:shadow-md transition-shadow duration-200 rounded-lg">
+      <div className="flex flex-col h-full">
+        <h3 className="text-lg font-medium mb-2">{video.title}</h3>
         {video.description && (
-          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{video.description}</p>
+          <p className="text-muted-foreground text-sm mb-3">{video.description}</p>
         )}
-        <div className="mt-auto flex items-center justify-between">
-          <div className="text-xs font-medium px-2 py-0.5 rounded-full bg-accent/70 text-accent-foreground">
-            {video.subcategory || video.category}
-          </div>
-          <a 
-            href={video.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
-            onClick={handleResourceClick}
-          >
-            Explore {getResourceIcon()}
-          </a>
+        <div className="flex items-center text-xs text-muted-foreground gap-2 mt-auto">
+          {getResourceIcon()}
+          {video.category && (
+            <span>
+              {video.category}{video.subcategory ? ` › ${video.subcategory}` : ''}
+            </span>
+          )}
         </div>
+        {renderTags()}
       </div>
-    </div>
+    </a>
   );
 };
 

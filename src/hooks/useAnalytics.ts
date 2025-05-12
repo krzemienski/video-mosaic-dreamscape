@@ -1,4 +1,3 @@
-
 // Custom hook for Google Analytics tracking
 export const useAnalytics = () => {
   // Page view tracking
@@ -16,9 +15,9 @@ export const useAnalytics = () => {
 
   // Event tracking with improved properties
   const trackEvent = (
-    eventName: string, 
-    category: string, 
-    label?: string, 
+    eventName: string,
+    category: string,
+    label?: string,
     value?: number,
     additionalParams?: Record<string, any>
   ) => {
@@ -40,11 +39,12 @@ export const useAnalytics = () => {
     title: string,
     url: string,
     category?: string,
-    subcategory?: string
+    subcategory?: string,
+    tags?: string[]
   ) => {
     if (window.gtag) {
       const urlDomain = new URL(url).hostname;
-      
+
       window.gtag('event', 'resource_click', {
         event_category: 'engagement',
         event_label: title,
@@ -52,6 +52,7 @@ export const useAnalytics = () => {
         resource_domain: urlDomain,
         resource_category: category || 'unknown',
         resource_subcategory: subcategory || 'none',
+        resource_tags: tags || [],
         timestamp: new Date().toISOString(),
         send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
       });
@@ -60,13 +61,19 @@ export const useAnalytics = () => {
   };
 
   // Search tracking with improved data
-  const trackSearch = (query: string, resultsCount: number) => {
+  const trackSearch = (query: string, resultsCount: number, searchMethod?: string) => {
     if (window.gtag) {
+      // Create normalized versions of the search term for analytics
+      const normalizedTerm = query.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const termWithoutSpecialChars = query.toLowerCase().replace(/[-_\s]/g, '');
+
       window.gtag('event', 'search', {
         search_term: query,
-        normalized_search_term: query.toLowerCase().replace(/[-_\s]/g, ''),
+        normalized_search_term: normalizedTerm,
+        basic_normalized_term: termWithoutSpecialChars,
         results_count: resultsCount,
         has_results: resultsCount > 0,
+        search_method: searchMethod || 'direct',
         timestamp: new Date().toISOString(),
         send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
       });
@@ -89,7 +96,7 @@ export const useAnalytics = () => {
     }
   };
 
-  // New function to track filter usage
+  // Track filter usage
   const trackFilterUsage = (filterType: string, filterValue: string) => {
     if (window.gtag) {
       window.gtag('event', 'filter_usage', {
@@ -104,7 +111,7 @@ export const useAnalytics = () => {
     }
   };
 
-  // New function to track user sessions
+  // Track user sessions
   const trackSessionStart = () => {
     if (window.gtag) {
       window.gtag('event', 'session_start', {
@@ -116,6 +123,91 @@ export const useAnalytics = () => {
     }
   };
 
+  // Track scroll depth
+  const trackScrollDepth = (percentage: number, path: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'scroll_depth', {
+        event_category: 'engagement',
+        event_label: path,
+        value: percentage,
+        page_path: path,
+        page_title: document.title,
+        timestamp: new Date().toISOString(),
+        send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
+      });
+      console.log(`Analytics: Tracked scroll depth - ${percentage}% on ${path}`);
+    }
+  };
+
+  // Track tag click
+  const trackTagClick = (tag: string, origin: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'tag_click', {
+        event_category: 'interaction',
+        event_label: tag,
+        tag_name: tag,
+        origin: origin,
+        timestamp: new Date().toISOString(),
+        send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
+      });
+      console.log(`Analytics: Tracked tag click - ${tag} from ${origin}`);
+    }
+  };
+
+  // Track download
+  const trackDownload = (resourceName: string, resourceType: string, resourcePath: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'download', {
+        event_category: 'engagement',
+        event_label: resourceName,
+        resource_name: resourceName,
+        resource_type: resourceType,
+        resource_path: resourcePath,
+        timestamp: new Date().toISOString(),
+        send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
+      });
+      console.log(`Analytics: Tracked download - ${resourceName} (${resourceType})`);
+    }
+  };
+
+  // Track time spent on page
+  const trackTimeSpent = (seconds: number, path: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'time_spent', {
+        event_category: 'engagement',
+        event_label: path,
+        value: seconds,
+        page_path: path,
+        page_title: document.title,
+        seconds: seconds,
+        timestamp: new Date().toISOString(),
+        send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
+      });
+      console.log(`Analytics: Tracked time spent - ${seconds}s on ${path}`);
+    }
+  };
+
+  // Track UI interactions (buttons, navigation, etc.)
+  const trackUIInteraction = (
+    elementType: string,
+    elementLabel: string,
+    context: string
+  ) => {
+    if (window.gtag) {
+      window.gtag('event', 'ui_interaction', {
+        event_category: 'interaction',
+        event_label: elementLabel,
+        element_type: elementType,
+        element_label: elementLabel,
+        interaction_context: context,
+        page_path: window.location.pathname,
+        timestamp: new Date().toISOString(),
+        send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
+      });
+      console.log(`Analytics: Tracked UI interaction - ${elementType}: ${elementLabel} in ${context}`);
+    }
+  };
+
   return {
     trackPageView,
     trackEvent,
@@ -123,7 +215,12 @@ export const useAnalytics = () => {
     trackSearch,
     trackCategoryView,
     trackFilterUsage,
-    trackSessionStart
+    trackSessionStart,
+    trackScrollDepth,
+    trackTagClick,
+    trackDownload,
+    trackTimeSpent,
+    trackUIInteraction
   };
 };
 
