@@ -68,7 +68,7 @@ const SearchPage = () => {
       };
 
       fetchResults();
-    }, 100); // Short delay to batch state updates
+    }, 50); // Quicker response time for the search page
     
   }, [query, trackSearch]);
 

@@ -17,7 +17,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = "Search resources...",
   className = "",
   minCharsToSearch = 2,
-  debounceTime = 600
+  debounceTime = 1000 // Changed to 1000ms (1 second)
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -32,6 +32,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     // Initialize the debounced function once
     debouncedSearchRef.current = debounce((term: string) => {
       if (term.trim().length >= minCharsToSearch) {
+        console.log(`Executing debounced search for: "${term}"`);
         setIsSearching(false);
         navigate(`/search?q=${encodeURIComponent(term.trim())}`);
         
@@ -72,12 +73,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     // Show searching indicator only for valid search terms
     if (value.trim().length >= minCharsToSearch) {
       setIsSearching(true);
+      console.log(`Search indicator shown for: "${value}"`);
+      
+      if (debouncedSearchRef.current) {
+        debouncedSearchRef.current(value);
+        console.log(`Debounced search triggered for: "${value}"`);
+      }
     } else {
       setIsSearching(false);
-    }
-    
-    if (debouncedSearchRef.current) {
-      debouncedSearchRef.current(value);
     }
   };
 
