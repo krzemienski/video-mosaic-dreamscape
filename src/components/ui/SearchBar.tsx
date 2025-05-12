@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -18,14 +18,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
-
-  // Debounced search navigation
-  const debouncedSearch = useCallback(
-    debounce((term: string) => {
+  const isInitialMount = useRef(true);
+  
+  // Create a stable reference to the debounce function
+  const debouncedSearchRef = useRef<(term: string) => void>();
+  
+  useEffect(() => {
+    // Initialize the debounced function once
+    debouncedSearchRef.current = debounce((term: string) => {
       if (term.trim().length > 1) {
-        navigate(`/search?q=${encodeURIComponent(term)}`);
+        navigate(`/search?q=${encodeURIComponent(term.trim())}`);
         
-        // Track search initiation (different from search results tracking)
+        // Track search initiation
         trackEvent(
           'search_initiated', 
           'interaction', 
@@ -34,20 +38,52 @@ const SearchBar: React.FC<SearchBarProps> = ({
           { search_method: 'debounced' }
         );
       }
-    }, 500),
-    [navigate, trackEvent]
-  );
+    }, 800); // Increased debounce delay to reduce search frequency
+    
+    // Cleanup function
+    return () => {
+      // Cancel any pending debounced calls if component unmounts
+      if (debouncedSearchRef.current) {
+        // TypeScript doesn't know about the cancel property on debounced functions
+        const debouncedFn = debouncedSearchRef.current as any;
+        if (debouncedFn.cancel) {
+          debouncedFn.cancel();
+        }
+      }
+    };
+  }, [navigate, trackEvent]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    debouncedSearch(value);
+    
+    // Skip search on initial render or for very short terms
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    // Don't trigger search for very short terms
+    if (value.trim().length <= 1) {
+      return;
+    }
+    
+    if (debouncedSearchRef.current) {
+      debouncedSearchRef.current(value);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchTerm.trim().length > 1) {
       e.preventDefault();
-      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+      
+      // Cancel any pending debounced calls
+      const debouncedFn = debouncedSearchRef.current as any;
+      if (debouncedFn?.cancel) {
+        debouncedFn.cancel();
+      }
+      
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
       
       // Track search initiated by Enter key
       trackEvent(

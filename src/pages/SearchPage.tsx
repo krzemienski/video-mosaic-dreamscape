@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+
+import React, { useEffect, useState, useRef } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
 import ErrorState from '@/components/ui/ErrorState';
 import { searchVideos } from '@/services/api';
@@ -12,31 +13,36 @@ import useAnalytics from '@/hooks/useAnalytics';
 
 const SearchPage = () => {
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
+  const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [view, setView] = useViewState();
   const { trackSearch } = useAnalytics();
   
   const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const lastQuery = useRef<string>('');
+  
   useEffect(() => {
+    // Skip search if query is too short or the same as last search
+    if (!query || query.trim().length <= 1 || query === lastQuery.current) {
+      return;
+    }
+    
+    lastQuery.current = query;
+    
     const fetchResults = async () => {
-      if (!query) {
-        setResults([]);
-        setIsLoading(false);
-        return;
-      }
-      
       try {
         setIsLoading(true);
         setError(null);
+        console.log(`Executing search for query: "${query}"`);
+        
         const data = await searchVideos(query);
         setResults(data);
         
         // Track search query and results count with analytics
         trackSearch(query, data.length);
+        console.log(`Search completed: found ${data.length} results for "${query}"`);
       } catch (err) {
         setError("Failed to search resources. Please try again.");
         console.error('Search error:', err);

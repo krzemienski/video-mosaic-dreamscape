@@ -12,7 +12,7 @@ export function debounce<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   
-  return function(...args: Parameters<T>) {
+  const debouncedFunction = function(...args: Parameters<T>) {
     const later = () => {
       timeout = null;
       func(...args);
@@ -23,4 +23,14 @@ export function debounce<T extends (...args: any[]) => any>(
     }
     timeout = setTimeout(later, wait);
   };
+  
+  // Add cancel method to clear the timeout
+  (debouncedFunction as any).cancel = function() {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  
+  return debouncedFunction;
 }
