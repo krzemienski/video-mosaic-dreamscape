@@ -118,7 +118,7 @@ const SearchPage = () => {
       };
 
       fetchResults();
-    }, 50); // Quicker response time for the search page
+    }, 50); // Maintain quick response time for the search page
 
   }, [query, trackSearch, trackEvent]);
 
