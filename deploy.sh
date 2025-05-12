@@ -1,9 +1,13 @@
+
 #!/bin/bash
 
 # Build preparation script for awesome.video
 # Usage: ./deploy.sh
 
 echo "Preparing build for Vercel deployment..."
+
+# Ensure correct Node.js version
+export NODE_VERSION=16.x
 
 # Install dependencies
 echo "Installing dependencies..."

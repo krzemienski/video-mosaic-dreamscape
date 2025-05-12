@@ -13,7 +13,7 @@
   "env": {
     "NODE_OPTIONS": "--max_old_space_size=4096",
     "VITE_SITE_URL": "https://awesome.video",
-    "NODE_VERSION": "18.x"
+    "NODE_VERSION": "16.x"
   },
   "build": {
     "env": {
