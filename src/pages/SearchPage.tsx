@@ -22,6 +22,16 @@ const SearchPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lastQuery = useRef<string>('');
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  useEffect(() => {
+    // Clear any pending search when unmounting
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
   
   useEffect(() => {
     // Skip search if query is too short or the same as last search
@@ -29,29 +39,37 @@ const SearchPage = () => {
       return;
     }
     
-    lastQuery.current = query;
+    // Add a slight delay to prevent rapid state updates
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
     
-    const fetchResults = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        console.log(`Executing search for query: "${query}"`);
-        
-        const data = await searchVideos(query);
-        setResults(data);
-        
-        // Track search query and results count with analytics
-        trackSearch(query, data.length);
-        console.log(`Search completed: found ${data.length} results for "${query}"`);
-      } catch (err) {
-        setError("Failed to search resources. Please try again.");
-        console.error('Search error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    searchTimeoutRef.current = setTimeout(() => {
+      lastQuery.current = query;
+      
+      const fetchResults = async () => {
+        try {
+          setIsLoading(true);
+          setError(null);
+          console.log(`Executing search for query: "${query}"`);
+          
+          const data = await searchVideos(query);
+          setResults(data);
+          
+          // Track search query and results count with analytics
+          trackSearch(query, data.length);
+          console.log(`Search completed: found ${data.length} results for "${query}"`);
+        } catch (err) {
+          setError("Failed to search resources. Please try again.");
+          console.error('Search error:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-    fetchResults();
+      fetchResults();
+    }, 100); // Short delay to batch state updates
+    
   }, [query, trackSearch]);
 
   const renderSkeletons = () => {
