@@ -28,7 +28,9 @@ export default defineConfig(({ mode }) => ({
       // Ensure Rollup doesn't attempt to use unsupported features
       treeshake: {
         moduleSideEffects: true,
-      }
+      },
+      // Add explicit external dependencies if needed
+      external: [],
     }
   }
 }));
