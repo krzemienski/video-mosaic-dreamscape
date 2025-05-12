@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ExternalLink, Github, BookOpen, Code, FileText } from 'lucide-react';
 import { VideoResource } from '@/services/api';
+import useAnalytics from '@/hooks/useAnalytics';
 
 interface VideoCardProps {
   video: VideoResource;
@@ -9,6 +10,8 @@ interface VideoCardProps {
 }
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
+  const { trackResourceClick } = useAnalytics();
+  
   // Determine icon based on URL pattern
   const getResourceIcon = () => {
     const url = video.url.toLowerCase();
@@ -25,15 +28,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
     }
   };
   
-  // Track when user clicks on a resource
-  const trackResourceClick = () => {
-    window.gtag?.('event', 'resource_click', {
-      event_category: 'engagement',
-      event_label: video.title,
-      resource_url: video.url,
-      resource_category: video.category,
-      resource_subcategory: video.subcategory || 'none'
-    });
+  // Track when user clicks on a resource with enhanced analytics
+  const handleResourceClick = () => {
+    trackResourceClick(
+      video.title,
+      video.url,
+      video.category,
+      video.subcategory
+    );
   };
 
   if (view === 'list') {
@@ -59,7 +61,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-sm font-medium text-primary hover:underline transition-all"
-              onClick={trackResourceClick}
+              onClick={handleResourceClick}
             >
               Explore {getResourceIcon()}
             </a>
@@ -87,7 +89,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
-              onClick={trackResourceClick}
+              onClick={handleResourceClick}
             >
               Explore {getResourceIcon()}
             </a>
@@ -114,7 +116,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center gap-1 text-xs font-medium text-primary hover:underline transition-all"
-            onClick={trackResourceClick}
+            onClick={handleResourceClick}
           >
             Explore {getResourceIcon()}
           </a>

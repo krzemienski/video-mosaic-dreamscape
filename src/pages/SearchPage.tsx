@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -9,12 +8,14 @@ import useViewState from '@/hooks/useViewState';
 import ViewToggle from '@/components/ui/ViewToggle';
 import { Loader } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import useAnalytics from '@/hooks/useAnalytics';
 
 const SearchPage = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const query = searchParams.get('q') || '';
   const [view, setView] = useViewState();
+  const { trackSearch } = useAnalytics();
   
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +34,9 @@ const SearchPage = () => {
         setError(null);
         const data = await searchVideos(query);
         setResults(data);
+        
+        // Track search query and results count with analytics
+        trackSearch(query, data.length);
       } catch (err) {
         setError("Failed to search resources. Please try again.");
         console.error('Search error:', err);
@@ -42,7 +46,7 @@ const SearchPage = () => {
     };
 
     fetchResults();
-  }, [query]);
+  }, [query, trackSearch]);
 
   const renderSkeletons = () => {
     return Array(6).fill(0).map((_, i) => (

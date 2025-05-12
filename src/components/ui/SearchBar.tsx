@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { debounce } from '@/lib/utils';
+import useAnalytics from '@/hooks/useAnalytics';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -16,15 +17,25 @@ const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
 
   // Debounced search navigation
   const debouncedSearch = useCallback(
     debounce((term: string) => {
       if (term.trim().length > 1) {
         navigate(`/search?q=${encodeURIComponent(term)}`);
+        
+        // Track search initiation (different from search results tracking)
+        trackEvent(
+          'search_initiated', 
+          'interaction', 
+          term, 
+          undefined, 
+          { search_method: 'debounced' }
+        );
       }
     }, 500),
-    [navigate]
+    [navigate, trackEvent]
   );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +48,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
     if (e.key === 'Enter' && searchTerm.trim().length > 1) {
       e.preventDefault();
       navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+      
+      // Track search initiated by Enter key
+      trackEvent(
+        'search_initiated', 
+        'interaction', 
+        searchTerm, 
+        undefined, 
+        { search_method: 'enter_key' }
+      );
     }
   };
 

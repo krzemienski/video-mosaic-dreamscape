@@ -249,6 +249,9 @@ export const searchVideos = async (query: string): Promise<VideoResource[]> => {
 
     console.log(`searchVideos: Collected ${allVideos.length} total videos to search through`);
 
+    // Normalize the query by removing special characters
+    const normalizedQuery = query.toLowerCase().replace(/[-_\s]/g, '');
+
     // Check if the query looks like a tag search (starts with # or tag:)
     const isTagSearch = query.startsWith('#') || query.toLowerCase().startsWith('tag:');
     let searchTerm = query;
@@ -258,30 +261,41 @@ export const searchVideos = async (query: string): Promise<VideoResource[]> => {
       searchTerm = query.startsWith('#') ? query.substring(1) : query.substring(4);
       console.log(`searchVideos: Searching specifically for tag "${searchTerm}"`);
 
-      // Filter videos specifically by tag
+      // Filter videos specifically by tag with fuzzy matching
       const results = allVideos.filter(video =>
         video.tags &&
-        video.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        video.tags.some(tag => {
+          const normalizedTag = tag.toLowerCase().replace(/[-_\s]/g, '');
+          return normalizedTag.includes(searchTerm.toLowerCase().replace(/[-_\s]/g, ''));
+        })
       );
 
       console.log(`searchVideos: Found ${results.length} videos with tag matching "${searchTerm}"`);
       return results;
     } else {
-      // Regular search across all fields
+      // Regular search across all fields with fuzzy matching
       const results = allVideos.filter(video => {
         // Include all relevant fields in the search
-        const searchableText = [
+        const searchableFields = [
           video.title || '',
           video.description || '',
-          video.tags?.join(' ') || '',
           video.category || '',
           video.subcategory || ''
-        ].join(' ').toLowerCase();
+        ];
 
-        return searchableText.includes(searchTerm.toLowerCase());
+        // Add normalized tags for fuzzy matching
+        if (video.tags && video.tags.length > 0) {
+          const normalizedTags = video.tags.map(tag => tag.toLowerCase().replace(/[-_\s]/g, ''));
+          searchableFields.push(normalizedTags.join(' '));
+        }
+
+        // Create a normalized searchable text
+        const normalizedSearchableText = searchableFields.join(' ').toLowerCase().replace(/[-_\s]/g, '');
+
+        return normalizedSearchableText.includes(normalizedQuery);
       });
 
-      console.log(`searchVideos: Found ${results.length} videos matching query "${searchTerm}"`);
+      console.log(`searchVideos: Found ${results.length} videos matching query "${searchTerm}" (normalized: "${normalizedQuery}")`);
       return results;
     }
   } catch (error) {
