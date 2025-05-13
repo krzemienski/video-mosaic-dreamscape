@@ -40,7 +40,8 @@ export const useAnalytics = () => {
     url: string,
     category?: string,
     subcategory?: string,
-    tags?: string[]
+    tags?: string[],
+    viewMode?: 'grid' | 'list' | 'masonry'
   ) => {
     if (window.gtag) {
       const urlDomain = new URL(url).hostname;
@@ -53,10 +54,11 @@ export const useAnalytics = () => {
         resource_category: category || 'unknown',
         resource_subcategory: subcategory || 'none',
         resource_tags: tags || [],
+        view_mode: viewMode || 'unknown',
         timestamp: new Date().toISOString(),
         send_to: import.meta.env.VITE_GA_MEASUREMENT_ID
       });
-      console.log(`Analytics: Tracked resource click - ${title} (${category}/${subcategory})`);
+      console.log(`Analytics: Tracked resource click - ${title} (${category}/${subcategory}) in ${viewMode} view`);
     }
   };
 

@@ -35,7 +35,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, view }) => {
       video.url,
       video.category,
       video.subcategory,
-      video.tags
+      video.tags,
+      view // Add the view type to know which layout users prefer
     );
   };
 

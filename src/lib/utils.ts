@@ -15,29 +15,57 @@ export function debounce<T extends (...args: any[]) => any>(
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
+  let lastArgs: Parameters<T> | null = null;
 
+  // The function that will be returned
   const debouncedFunction = function(...args: Parameters<T>) {
+    // Store the latest arguments
+    lastArgs = args;
+    console.log(`⏱️ Debounce: Function called with args:`, args[0]);
+
     // Clear the previous timeout (if any) to reset the timer
     if (timeout !== null) {
+      console.log(`⏱️ Debounce: Clearing previous timeout`);
       clearTimeout(timeout);
       timeout = null;
     }
 
     // Schedule the function call after the specified wait time
-    // And ensure we're capturing the current args
+    console.log(`⏱️ Debounce: Setting timeout for ${wait}ms`);
+
     timeout = setTimeout(() => {
+      console.log(`⏱️ Debounce: Timeout fired after ${wait}ms`);
+      // Capture arguments in case they changed
+      const currentArgs = lastArgs;
+      // Clear refs
       timeout = null;
-      console.log(`Debounce timer executed after ${wait}ms`);
-      func(...args);
+      lastArgs = null;
+
+      // Actually execute the function
+      if (currentArgs) {
+        console.log(`⏱️ Debounce: Executing function with args:`, currentArgs[0]);
+        try {
+          func(...currentArgs);
+          console.log(`⏱️ Debounce: Function executed successfully`);
+        } catch (error) {
+          console.error(`⏱️ Debounce: Error executing function:`, error);
+        }
+      } else {
+        console.error(`⏱️ Debounce: No arguments available for execution`);
+      }
     }, wait);
   };
 
   // Add cancel method to clear the timeout
   (debouncedFunction as any).cancel = function() {
+    console.log('⏱️ Debounce: Cancel called');
     if (timeout !== null) {
-      console.log('Debounced function canceled');
+      console.log('⏱️ Debounce: Canceling active timeout');
       clearTimeout(timeout);
       timeout = null;
+      lastArgs = null;
+    } else {
+      console.log('⏱️ Debounce: No active timeout to cancel');
     }
   };
 

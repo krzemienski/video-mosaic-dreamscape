@@ -16,145 +16,85 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = "Search resources...",
   className = "",
   minCharsToSearch = 2,
-  debounceTime = 200 // Changed to 200ms (0.2 seconds) for more responsive search
+  debounceTime = 200 // 200ms debounce time
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
-  const isInitialMount = useRef(true);
-  const searchStartTimeRef = useRef<number>(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Create a stable reference to the debounce function
-  const debouncedSearchRef = useRef<((term: string) => void) | null>(null);
+  // Create a stable reference to the debounced search function
+  const debouncedSearchRef = useRef<(...args: any[]) => void>();
 
-  // Initialize the debounced function
+  // Initialize the debounced search function once on component mount
   useEffect(() => {
-    // Define the debounced search function
+    // Define the actual search function
     const performSearch = (term: string) => {
-      if (term.trim().length >= minCharsToSearch) {
-        console.log(`Executing debounced search for: "${term}"`);
-
-        // Calculate time from typing to search execution
-        const searchDelay = Date.now() - searchStartTimeRef.current;
-
+      console.log('Debounced search executing with term:', term);
+      if (term.length >= minCharsToSearch) {
         setIsSearching(false);
-        navigate(`/search?q=${encodeURIComponent(term.trim())}`);
-
-        // Track search initiation with timing data
-        trackEvent(
-          'search_initiated',
-          'interaction',
-          term,
-          undefined,
-          {
-            search_method: 'debounced',
-            input_to_search_delay_ms: searchDelay,
-            debounce_time_setting: debounceTime
-          }
-        );
+        trackEvent('search', { term });
+        navigate(`/search?q=${encodeURIComponent(term)}`);
       }
     };
 
-    // Create a new debounced function each time dependencies change
+    // Create the debounced version of the search function
     debouncedSearchRef.current = debounce(performSearch, debounceTime);
 
-    // Cleanup function
+    // Clean up function
     return () => {
-      // Cancel any pending debounced calls if component unmounts
-      if (debouncedSearchRef.current) {
-        const debouncedFn = debouncedSearchRef.current as any;
-        if (debouncedFn.cancel) {
-          debouncedFn.cancel();
-        }
-        debouncedSearchRef.current = null;
-      }
+      // No need to cleanup as debounce's cancel is not exposed in our implementation
     };
-  }, [navigate, trackEvent, minCharsToSearch, debounceTime]);
+  }, [navigate, minCharsToSearch, debounceTime, trackEvent]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+    const newTerm = e.target.value;
+    setSearchTerm(newTerm);
 
-    // Skip search on initial render
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
+    console.log('Search term changed to:', newTerm);
 
-    // Check if the search term meets the minimum length requirement
-    if (value.trim().length >= minCharsToSearch) {
-      // Record the time when search starts
-      searchStartTimeRef.current = Date.now();
+    if (newTerm.length >= minCharsToSearch) {
       setIsSearching(true);
-      console.log(`Search indicator shown for: "${value}"`);
-
-      // Trigger the debounced search
-      if (debouncedSearchRef.current) {
-        debouncedSearchRef.current(value);
-        console.log(`Debounced search triggered for: "${value}"`);
-      } else {
-        console.error('Debounced search function is not available');
-      }
+      console.log('Invoking debounced search for:', newTerm);
+      // Use the stable reference to the debounced search function
+      debouncedSearchRef.current?.(newTerm);
     } else {
       setIsSearching(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchTerm.trim().length >= minCharsToSearch) {
-      e.preventDefault();
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Search form submitted with term:', searchTerm);
 
-      // Calculate time from typing to Enter key press
-      const searchDelay = Date.now() - searchStartTimeRef.current;
-
-      // Cancel any pending debounced calls
-      if (debouncedSearchRef.current) {
-        const debouncedFn = debouncedSearchRef.current as any;
-        if (debouncedFn.cancel) {
-          debouncedFn.cancel();
-        }
-      }
-
+    if (searchTerm.length >= minCharsToSearch) {
       setIsSearching(false);
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-
-      // Track search initiated by Enter key with timing data
-      trackEvent(
-        'search_initiated',
-        'interaction',
-        searchTerm,
-        undefined,
-        {
-          search_method: 'enter_key',
-          input_to_search_delay_ms: searchDelay
-        }
-      );
+      trackEvent('search', { term: searchTerm });
+      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
   return (
-    <div className={`relative ${className}`}>
-      {isSearching ? (
-        <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-pulse" />
-      ) : (
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      )}
+    <form onSubmit={handleSearchSubmit} className={`relative ${className}`}>
+      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
       <Input
-        type="text"
+        ref={inputRef}
+        type="search"
         placeholder={placeholder}
         value={searchTerm}
         onChange={handleSearchChange}
-        onKeyDown={handleKeyDown}
-        className="pl-10 w-full bg-secondary/50 border-secondary focus-visible:ring-primary-500"
-        aria-label="Search with auto-complete (after 2 characters)"
+        className="w-full pl-8 pr-10"
+        aria-label={`Search with auto-complete (after ${minCharsToSearch} characters)`}
       />
+
       {isSearching && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
           Searching...
         </div>
       )}
-    </div>
+    </form>
   );
 };
 
