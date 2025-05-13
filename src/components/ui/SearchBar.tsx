@@ -26,11 +26,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const searchStartTimeRef = useRef<number>(0);
 
   // Create a stable reference to the debounce function
-  const debouncedSearchRef = useRef<(term: string) => void>();
+  const debouncedSearchRef = useRef<((term: string) => void) | null>(null);
 
+  // Initialize the debounced function
   useEffect(() => {
-    // Initialize the debounced function once
-    debouncedSearchRef.current = debounce((term: string) => {
+    // Define the debounced search function
+    const performSearch = (term: string) => {
       if (term.trim().length >= minCharsToSearch) {
         console.log(`Executing debounced search for: "${term}"`);
 
@@ -53,17 +54,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
           }
         );
       }
-    }, debounceTime);
+    };
+
+    // Create a new debounced function each time dependencies change
+    debouncedSearchRef.current = debounce(performSearch, debounceTime);
 
     // Cleanup function
     return () => {
       // Cancel any pending debounced calls if component unmounts
       if (debouncedSearchRef.current) {
-        // TypeScript doesn't know about the cancel property on debounced functions
         const debouncedFn = debouncedSearchRef.current as any;
         if (debouncedFn.cancel) {
           debouncedFn.cancel();
         }
+        debouncedSearchRef.current = null;
       }
     };
   }, [navigate, trackEvent, minCharsToSearch, debounceTime]);
@@ -78,16 +82,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
       return;
     }
 
-    // Show searching indicator immediately for valid search terms
+    // Check if the search term meets the minimum length requirement
     if (value.trim().length >= minCharsToSearch) {
       // Record the time when search starts
       searchStartTimeRef.current = Date.now();
       setIsSearching(true);
       console.log(`Search indicator shown for: "${value}"`);
 
+      // Trigger the debounced search
       if (debouncedSearchRef.current) {
         debouncedSearchRef.current(value);
         console.log(`Debounced search triggered for: "${value}"`);
+      } else {
+        console.error('Debounced search function is not available');
       }
     } else {
       setIsSearching(false);
@@ -102,9 +109,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
       const searchDelay = Date.now() - searchStartTimeRef.current;
 
       // Cancel any pending debounced calls
-      const debouncedFn = debouncedSearchRef.current as any;
-      if (debouncedFn?.cancel) {
-        debouncedFn.cancel();
+      if (debouncedSearchRef.current) {
+        const debouncedFn = debouncedSearchRef.current as any;
+        if (debouncedFn.cancel) {
+          debouncedFn.cancel();
+        }
       }
 
       setIsSearching(false);

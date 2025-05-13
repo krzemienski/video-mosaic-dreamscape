@@ -17,24 +17,29 @@ export function debounce<T extends (...args: any[]) => any>(
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
   const debouncedFunction = function(...args: Parameters<T>) {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-
+    // Clear the previous timeout (if any) to reset the timer
     if (timeout !== null) {
       clearTimeout(timeout);
+      timeout = null;
     }
-    timeout = setTimeout(later, wait);
+
+    // Schedule the function call after the specified wait time
+    // And ensure we're capturing the current args
+    timeout = setTimeout(() => {
+      timeout = null;
+      console.log(`Debounce timer executed after ${wait}ms`);
+      func(...args);
+    }, wait);
   };
 
   // Add cancel method to clear the timeout
   (debouncedFunction as any).cancel = function() {
     if (timeout !== null) {
+      console.log('Debounced function canceled');
       clearTimeout(timeout);
       timeout = null;
     }
   };
 
-  return debouncedFunction;
+  return debouncedFunction as any;
 }
