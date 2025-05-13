@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Timer } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { debounce } from '@/lib/utils';
 import useAnalytics from '@/hooks/useAnalytics';
 
@@ -16,9 +16,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = "Search resources...",
   className = "",
   minCharsToSearch = 2,
-  debounceTime = 200 // 200ms debounce time
+  debounceTime = 800 // Increased from 200ms to 800ms to give users more time to type
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const location = useLocation();
+  // Initialize search term from URL query parameter if available
+  const getInitialSearchTerm = () => {
+    const searchParams = new URLSearchParams(location.search);
+    return searchParams.get('q') || '';
+  };
+
+  const [searchTerm, setSearchTerm] = useState(getInitialSearchTerm);
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
@@ -35,7 +42,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       if (term.length >= minCharsToSearch) {
         setIsSearching(false);
         trackEvent('search', { term });
-        navigate(`/search?q=${encodeURIComponent(term)}`);
+
+        // Use replace instead of push to avoid multiple history entries
+        navigate(`/search?q=${encodeURIComponent(term)}`, { replace: true });
       }
     };
 
@@ -47,6 +56,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
       // No need to cleanup as debounce's cancel is not exposed in our implementation
     };
   }, [navigate, minCharsToSearch, debounceTime, trackEvent]);
+
+  // Update search term when URL changes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const queryFromUrl = searchParams.get('q');
+    if (queryFromUrl && queryFromUrl !== searchTerm) {
+      setSearchTerm(queryFromUrl);
+    }
+  }, [location.search]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTerm = e.target.value;
